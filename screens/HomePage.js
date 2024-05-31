@@ -4,7 +4,7 @@ import { View, Text, Button, StyleSheet } from 'react-native';
 function HomePage({navigation}) {
   return (
     <View style = {styles.container}>
-      <Text>Home Page</Text>
+      <Text>Home</Text>
       <Button title = "Logout" onPress={() => navigation.navigate('Login')}/>
     </View>
   );
