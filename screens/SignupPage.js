@@ -2,26 +2,28 @@ import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 
-const LoginPage = ({ navigation }) => {
-
+const SignupPage = ({ navigation }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false)
 
-    async function signInWithEmail() {
+    async function signUpWithEmail() {
         setLoading(true)
-        const { error } = await supabase.auth.signInWithPassword({
+        const {
+          data: { session },
+          error,
+        } = await supabase.auth.signUp({
           email: email,
           password: password,
         })
     
-        if (error) Alert.alert(error.message);
-        else {
-            navigation.navigate('Home')
+        if (error) Alert.alert('SignUp failed', error.message);
+        if (!session) {
+            Alert.alert('SignUp successful', 'Please check your inbox for email verification!');
             setLoading(false)
-        }; 
-      
-  };
+            navigation.navigate('Login');
+        }
+    };
 
     return (
     <View style={styles.container}>
@@ -40,8 +42,7 @@ const LoginPage = ({ navigation }) => {
             onChangeText={setPassword}
             secureTextEntry
         />
-        <Button title="Sign in" onPress={() => signInWithEmail()} />
-        <Button title="Go to Signup" onPress={() => navigation.navigate('Signup')} />
+        <Button title="Sign up" onPress={() => signUpWithEmail()} />
         </View>
     </View>
     );
@@ -64,7 +65,7 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
     },
-        input: {
+    input: {
         borderWidth: 1,
         borderColor: '#ddd',
         padding: 10,
@@ -73,4 +74,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default LoginPage;
+export default SignupPage;
