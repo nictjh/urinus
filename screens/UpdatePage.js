@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
 
-const UpdatePage = ( {navigation} ) => {
+const UpdatePage = ({ navigation }) => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
