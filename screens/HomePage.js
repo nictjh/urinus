@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
 import { Button, Input } from '@rneui/themed';
 import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 
-const HomePage = ({ session }) => {
+
+const HomePage = ( {navigation} ) => {
+  const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
 
   useEffect(() => {
     getProfile();
@@ -77,7 +79,11 @@ const HomePage = ({ session }) => {
         />
       </View>
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sign Out" onPress={() => { 
+          supabase.auth.signOut() 
+          navigation.navigate('Login')
+          }}
+        />
       </View>
     </View>
   );
