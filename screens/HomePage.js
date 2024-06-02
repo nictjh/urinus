@@ -1,11 +1,71 @@
-import React from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
+
+function HomePage({ navigation }) {
+
+  const { session } = useAuth();
+  const [markers, setMarkers] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedMarker, setSelectedMarker] = useState(null);
 
 
-function HomePage({navigation}) {
+  useEffect(() => {
+    const initialize = async () => {
+      if (session?.user) {
+        await getProfile();
+        await fetchMarkers();
+      } else {
+        Alert.alert('Error', 'No user on the session!');
+      }
+    };
+
+    initialize();
+  }, [session]);
+
+  async function getProfile() {
+    try{
+      const { data, error, status } = await supabase
+        .from('profiles')
+        .select(`username`)
+        .eq('id', session?.user.id)
+        .single()
+      if (error && status !== 406) {
+        throw error;
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      }
+    }
+    
+  }
+
+  const fetchMarkers = async () => {
+    const { data, error } = await supabase
+      .from('venues')
+      .select('*');
+    if (error) {
+      console.log('Error fetching markers:', error);
+    } else {
+      setMarkers(data);
+    }
+  };
+
+  const handleMarkerPress = (marker) => {
+    setSelectedMarker(marker);
+    setModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+    setSelectedMarker(null); // Reset selected marker when modal closes
+  };
+
   return (
-    <View style = {styles.container}>
+    <View style={styles.container}>
       <MapView
         style={styles.map}
         initialRegion={{
@@ -15,17 +75,38 @@ function HomePage({navigation}) {
           longitudeDelta: 0.0121,
         }}
       >
-        <Marker
-          coordinate={{ latitude: 1.294916, longitude: 103.773873 }}
-          title={"NUS SoC"}
-          description={"National University of Singapore, School of Computing"}
-        />
+        {markers.map((marker) => (
+          <Marker
+            key={marker.marker_id}
+            coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
+            description={marker.roomcode}
+            onPress={() => handleMarkerPress(marker)}
+          />
+        ))}
       </MapView>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={handleModalClose}
+      >
+        <View style={styles.centeredView}>
+          <View style={styles.modalView}>
+            {selectedMarker && (
+              <>
+                <Text>{selectedMarker.roomname || 'No room name available'}</Text>
+                <Text>{selectedMarker.roomcode}</Text>
+                <Button title="Close" onPress={handleModalClose} />
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
       <View style={styles.buttonContainer}>
-        <Button 
-          title="Update" 
+        <Button
+          title="Update"
           onPress={() => navigation.navigate('Update')}
-          color="white" 
+          color="white"
         />
       </View>
     </View>
@@ -48,6 +129,27 @@ const styles = StyleSheet.create({
     width: '30%',
     backgroundColor: '#007BFF',
   },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 22,
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5
+  }
 });
 
 export default HomePage;
