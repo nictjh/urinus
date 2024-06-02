@@ -1,108 +1,53 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
-import { Button, Input } from '@rneui/themed';
-import { supabase } from '../lib/supabase';
-import { useAuth } from './AuthContext';
+import React from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import MapView, { Marker } from 'react-native-maps';
 
 
-const HomePage = ( {navigation} ) => {
-  const { session } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [username, setUsername] = useState('');
-
-  useEffect(() => {
-    getProfile();
-  }, []);
-
-  async function getProfile() {
-    try {
-      setLoading(true)
-      const { data, error, status } = await supabase
-        .from('profiles')
-        .select(`username`)
-        .eq('id', session?.user.id)
-        .single()
-      if (error && status !== 406) {
-        throw error
-      }
-
-      if (data) {
-        setUsername(data.username)
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message)
-      }
-    } finally {
-      setLoading(false)
-    }
-  }
-
-
-  async function updateProfile(username) {
-    try {
-      setLoading(true);
-      if (!session?.user) throw new Error('No user on the session!');
-
-      const updates = {
-        id: session?.user.id,
-        username: username,
-        updated_at: new Date(),
-      };
-
-      const { error } = await supabase.from('profiles').upsert(updates);
-      if (error) {
-        throw error;
-      }
-    } catch (error) {
-      Alert.alert('Error', error.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading) return <Text>Loading...</Text>;
-
+function HomePage({navigation}) {
   return (
-    <View style={styles.container}>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-          <Input label="Email" value={session?.user?.email} disabled placeholder="Disabled" />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Input label="Username" value={username || ''} onChangeText={setUsername} />
-      </View>
-      <View style={[styles.verticallySpaced, styles.mt20]}>
-        <Button
-          title={loading ? 'Loading ...' : 'Update'}
-          onPress={() => updateProfile(username)}
-          disabled={loading}
+    <View style = {styles.container}>
+      <MapView
+        style={styles.map}
+        initialRegion={{
+          latitude: 1.294916,
+          longitude: 103.773873,
+          latitudeDelta: 0.0322,
+          longitudeDelta: 0.0121,
+        }}
+      >
+        <Marker
+          coordinate={{ latitude: 1.294916, longitude: 103.773873 }}
+          title={"NUS SoC"}
+          description={"National University of Singapore, School of Computing"}
         />
-      </View>
-      <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => { 
-          supabase.auth.signOut() 
-          navigation.navigate('Login')
-          }}
+      </MapView>
+      <View style={styles.buttonContainer}>
+        <Button 
+          title="Update" 
+          onPress={() => navigation.navigate('Update')}
+          color="white" 
         />
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 40,
-    padding: 12,
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
   },
-  verticallySpaced: {
-    paddingTop: 4,
-    paddingBottom: 4,
-    alignSelf: 'stretch',
+  map: {
+    ...StyleSheet.absoluteFillObject,
   },
-  mt20: {
-    marginTop: 20,
+  buttonContainer: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    width: '30%',
+    backgroundColor: '#007BFF',
   },
 });
-
 
 export default HomePage;
