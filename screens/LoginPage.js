@@ -17,7 +17,7 @@ const LoginPage = ({ navigation }) => {
     
         if (error) Alert.alert(error.message);
         else {
-            navigation.navigate('Home')
+            navigation.navigate('TabHome')
             setLoading(false)
         }; 
       
