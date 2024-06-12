@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { useNavigation } from '@react-navigation/native';
 
-const SignupPage = ({ navigation }) => {
+const SignupPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false)
-
+    const navigation = useNavigation();
+    
     async function signUpWithEmail() {
         setLoading(true)
         const {
@@ -21,7 +23,7 @@ const SignupPage = ({ navigation }) => {
         if (!session) {
             Alert.alert('SignUp successful', 'Please check your inbox for email verification!');
             setLoading(false)
-            navigation.navigate('Login');
+            navigation.navigate('Tabs', { screen: 'Home' });
         }
     };
 

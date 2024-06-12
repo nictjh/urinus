@@ -3,12 +3,14 @@ import { View, Text, TextInput, Alert, StyleSheet } from 'react-native';
 import { Button, Input } from '@rneui/themed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useNavigation } from '@react-navigation/native';
 
 
-const UpdatePage = ({ navigation }) => {
+const UpdatePage = () => {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');
+  const navigation = useNavigation();
 
   useEffect(() => {
     getProfile();
@@ -61,6 +63,20 @@ const UpdatePage = ({ navigation }) => {
     }
   }
 
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) {
+        Alert.alert("Error", "Failed to sign out: " + error.message);
+    } else {
+        Alert.alert("Signed Out", "You have been signed out successfully.", [
+            {
+                text: "OK",
+                onPress: () => navigation.navigate('Tabs', { screen: 'Home' })
+            }
+        ]);
+    }
+  };
+
   if (loading) return <Text>Loading...</Text>;
 
   return (
@@ -79,11 +95,7 @@ const UpdatePage = ({ navigation }) => {
         />
       </View>
       <View style={styles.verticallySpaced}>
-        <Button title="Sign Out" onPress={() => { 
-          supabase.auth.signOut() 
-          navigation.navigate('Login')
-          }}
-        />
+        <Button title="Sign Out" onPress={handleSignOut}/>
       </View>
     </View>
   );

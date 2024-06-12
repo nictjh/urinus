@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginPage = ({ navigation }) => {
-
+const LoginPage = () => {
+    const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false)
@@ -17,7 +18,7 @@ const LoginPage = ({ navigation }) => {
     
         if (error) Alert.alert(error.message);
         else {
-            navigation.navigate('TabHome')
+            navigation.navigate('Tabs', { screen: 'Home' })
             setLoading(false)
         }; 
       

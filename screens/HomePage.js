@@ -14,18 +14,20 @@ function HomePage({ navigation }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
 
 
-  useEffect(() => {
-    const initialize = async () => {
-      if (session?.user) {
-        await getProfile();
-        await fetchMarkers();
-      } else {
-        Alert.alert('Error', 'No user on the session!');
-      }
-    };
+  // useEffect(() => {
+  //   const initialize = async () => {
+  //     if (session?.user) {
+  //       await getProfile();
+  //       await fetchMarkers();
+  //     } else {
+  //       Alert.alert('Error', 'No user on the session!');
+  //     }
+  //   };
 
-    initialize();
-  }, [session]);
+  //   initialize();
+  // }, [session]);
+
+  useEffect(() => { fetchMarkers() },[])
 
   async function getProfile() {
     try{
