@@ -1,27 +1,66 @@
 import * as React from 'react';
+import { Image } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { NavigationContainer } from '@react-navigation/native';
-import LoginPage from '../screens/LoginPage.js';
-import SignupPage from '../screens/SignupPage.js';
-import UpdatePage from '../screens/UpdatePage.js';
-import HomePage from '../screens/HomePage.js';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import LoginPage from '../screens/LoginPage';
+import SignupPage from '../screens/SignupPage';
+import UpdatePage from '../screens/UpdatePage';
+import HomePage from '../screens/HomePage';
+import ReviewPage from '../screens/ReviewPage';
+const homeIcon = require('../assets/navigation.png');
+const rateIcon = require('../assets/brand-twitter.png');
+const profileIcon = require('../assets/user-circle.png');
 
-
-
-const stack = createNativeStackNavigator()
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 function AppNavigator() {
     return (
         
-        <stack.Navigator>
-            <stack.Screen name = "Login" component = {LoginPage} />
-            <stack.Screen name = "Signup" component = {SignupPage} />
-            <stack.Screen name = "Home" component = {HomePage} />
-            <stack.Screen name = "Update" component = {UpdatePage} />
-        </stack.Navigator>
-
+        <Stack.Navigator>
+            <Stack.Screen name="Login" component={LoginPage} />
+            <Stack.Screen name="Signup" component={SignupPage} />
+            <Stack.Screen name="TabHome" component={TabNavigator} options={{ headerShown: false }} />
+        </Stack.Navigator>
+        
     );
 }
 
-//Always need to export function
+const TabNavigator = () => {
+    return (
+        <Tab.Navigator initialRouteName="Home">
+            <Tab.Screen 
+                name="Home" 
+                component={HomePage} 
+                options={{
+                    title: 'Home', 
+                    tabBarIcon: ({ focused }) => (<Image 
+                        source={homeIcon} style={{height:30, width:30, tintColor: focused ? "#000000" : "#999999"}} 
+                        />)
+                }} 
+            />
+            <Tab.Screen 
+                name="Review" 
+                component={ReviewPage} 
+                options={{
+                    title: 'Review', 
+                    tabBarIcon: ({ focused }) => (<Image 
+                        source={rateIcon} style={{height:30, width:30, tintColor: focused ? "#000000" : "#999999"}} 
+                        />)
+                }} 
+            />
+            <Tab.Screen 
+                name="Profile" 
+                component={UpdatePage} 
+                options={{
+                    title: 'Update', 
+                    tabBarIcon: ({ focused }) => (<Image 
+                        source={profileIcon} style={{height:30, width:30, tintColor: focused ? "#000000" : "#999999"}} 
+                    />)
+                }} 
+            />
+        </Tab.Navigator>
+    );
+}
+
 export default AppNavigator;

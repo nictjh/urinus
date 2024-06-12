@@ -104,13 +104,7 @@ function HomePage({ navigation }) {
           </View>
         </View>
       </Modal>
-      <View style={styles.buttonContainer}>
-        <Button
-          title="Update"
-          onPress={() => navigation.navigate('Update')}
-          color="white"
-        />
-      </View>
+      
     </View>
   );
 }
