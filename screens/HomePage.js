@@ -76,9 +76,6 @@ function HomePage({ navigation }) {
           latitudeDelta: 0.0322,
           longitudeDelta: 0.0121,
         }}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-        provider={MapView.PROVIDER_GOOGLE}
       >
         {markers.map((marker) => (
           <Marker
