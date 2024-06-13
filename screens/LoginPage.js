@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
 
@@ -42,7 +42,11 @@ const LoginPage = () => {
             secureTextEntry
         />
         <Button title="Sign in" onPress={() => signInWithEmail()} />
-        <Button title="Go to Signup" onPress={() => navigation.navigate('Signup')} />
+        <View style={styles.buttonContainer}>
+            <Text style={styles.signUpText}>Don't have an account?</Text>
+            <Button title="Sign up" onPress={() => navigation.navigate('Signup')} style={styles.signInButton} />
+        </View>
+        <Button title="Home" onPress={() => navigation.navigate('Tabs', { screen: 'Home' })} />
         </View>
     </View>
     );
@@ -53,7 +57,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f5f5f5', // light grey background
+        backgroundColor: '#f5f5f5',
     },
     card: {
         width: '80%',
@@ -65,12 +69,29 @@ const styles = StyleSheet.create({
         shadowRadius: 3.84,
         elevation: 5,
     },
-        input: {
+    input: {
         borderWidth: 1,
-        borderColor: '#ddd',
-        padding: 10,
-        marginBottom: 10,
-        borderRadius: 5,
+        borderColor: '#ccc',
+        padding: 15,
+        marginBottom: 15,
+        borderRadius: 10,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 10, 
+    },
+    signInButton: {
+        backgroundColor: '#007BFF', 
+        color: 'white',
+        padding: 15,
+        borderRadius: 10,
+        width: '100%', 
+        textAlign: 'center', 
+    },
+    signUpText: {
+        marginRight: 5, 
     },
 });
 
