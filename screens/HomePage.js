@@ -3,7 +3,7 @@ import { View, Text, Button, StyleSheet, TouchableOpacity, Modal } from 'react-n
 //import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
-import MapView from '../map/mymap'
+import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
 
 function HomePage({ navigation }) {
@@ -78,6 +78,9 @@ function HomePage({ navigation }) {
           latitudeDelta: 0.0322,
           longitudeDelta: 0.0121,
         }}
+        showsUserLocation
+        showsCompass
+        showsMyLocationButton
       >
         {markers.map((marker) => (
           <Marker
@@ -118,7 +121,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   map: {
-    ...StyleSheet.absoluteFillObject,
+    width: '100%',
+    height: '100%',
   },
   buttonContainer: {
     position: 'absolute',
