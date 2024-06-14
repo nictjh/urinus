@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal } from 'react-native';
+import React, { useRef, useState, useEffect } from 'react';
+import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Platform, Alert } from 'react-native';
 //import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
+import * as Location from 'expo-location';
 
 function HomePage({ navigation }) {
 
@@ -13,6 +14,60 @@ function HomePage({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
 
+  const mapRef = useRef(null);
+  const [region, setRegion] = useState({ // map region
+    latitude: 1.294916,
+    longitude: 103.773873,
+    latitudeDelta: 0.0322,
+    longitudeDelta: 0.0121,
+  });
+  const [errorMsg, setErrorMsg] = useState(null);
+
+  // we have to request location permissions lesgoooo
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      setRegion({
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.01,
+        longitudeDelta: 0.01,
+      });
+    })();
+  }, []);
+
+  const centerMapOnUserLocation = async () => {
+    // commenting out da debugging
+
+    // console.log('centerMapOnUserLocation');
+    let location = await Location.getCurrentPositionAsync({
+      accuracy: Location.Accuracy.Balanced
+    });
+    // console.log("New location:", location.coords);
+    // console.log("Current region state:", region);
+
+    // setRegion({
+    //   latitude: location.coords.latitude,
+    //   longitude: location.coords.longitude,
+    //   latitudeDelta: 0.01,
+    //   longitudeDelta: 0.01,
+    // });
+
+    const newRegion = {
+      latitude: location.coords.latitude,
+      longitude: location.coords.longitude,
+      latitudeDelta: 0.005,
+      longitudeDelta: 0.005,
+    };
+
+    mapRef.current?.animateToRegion(newRegion, 500); // ya boi is forcing a map animation here
+  };
 
   // useEffect(() => {
   //   const initialize = async () => {
@@ -71,16 +126,16 @@ function HomePage({ navigation }) {
   return (
     <View style={styles.container}>
       <MapView
-        style={styles.map}
         initialRegion={{
-          latitude: 1.294916,
-          longitude: 103.773873,
-          latitudeDelta: 0.0322,
-          longitudeDelta: 0.0121,
+          latitude: 1.294826,
+          longitude: 103.773999,
+          latitudeDelta: 0.0001,
+          longitudeDelta: 0.0001,
         }}
+        ref={mapRef}
+        style={styles.map}
         showsUserLocation
         showsCompass
-        showsMyLocationButton
       >
         {markers.map((marker) => (
           <Marker
@@ -91,6 +146,9 @@ function HomePage({ navigation }) {
           />
         ))}
       </MapView>
+      <View>
+        <Button title="Locate Me" onPress={centerMapOnUserLocation} style={styles.button} />
+      </View>
       <Modal
         animationType="slide"
         transparent={true}
@@ -122,6 +180,20 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: '100%',
+  },
+  button: {
+    position: 'absolute',
+    bottom: 20,
+    right: 20,
+    padding: 10,
+    backgroundColor: '#ffffff',
+    color: '#000',
+    borderRadius: 20,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 1, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
   },
   buttonContainer: {
     position: 'absolute',
