@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Platform, Alert } from 'react-native';
+import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 //import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -15,12 +15,8 @@ function HomePage({ navigation }) {
   const [selectedMarker, setSelectedMarker] = useState(null);
 
   const mapRef = useRef(null);
-  const [region, setRegion] = useState({ // map region
-    latitude: 1.294916,
-    longitude: 103.773873,
-    latitudeDelta: 0.0322,
-    longitudeDelta: 0.0121,
-  });
+
+  // for debugging purposes
   const [errorMsg, setErrorMsg] = useState(null);
 
   // we have to request location permissions lesgoooo
@@ -31,14 +27,6 @@ function HomePage({ navigation }) {
         setErrorMsg('Permission to access location was denied');
         return;
       }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setRegion({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.01,
-        longitudeDelta: 0.01,
-      });
     })();
   }, []);
 
@@ -146,9 +134,12 @@ function HomePage({ navigation }) {
           />
         ))}
       </MapView>
-      <View>
-        <Button title="Locate Me" onPress={centerMapOnUserLocation} style={styles.button} />
-      </View>
+      <TouchableOpacity style={styles.button} onPress={centerMapOnUserLocation}>
+        <Image
+          source={require('../assets/userlocationbutton.png')} 
+          style={styles.buttonImage}
+        />
+      </TouchableOpacity>
       <Modal
         animationType="slide"
         transparent={true}
@@ -186,14 +177,19 @@ const styles = StyleSheet.create({
     bottom: 20,
     right: 20,
     padding: 10,
+    overflow: 'hidden',
     backgroundColor: '#ffffff',
-    color: '#000',
-    borderRadius: 20,
+    borderRadius: 30,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+  },
+  buttonImage: {
+    width: 38,        // Set the width of the button image
+    height: 38,       // Set the height of the button image
+    resizeMode: 'contain', // Ensures the image is scaled correctly within the button area
   },
   buttonContainer: {
     position: 'absolute',
