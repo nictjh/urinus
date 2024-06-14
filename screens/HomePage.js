@@ -44,7 +44,7 @@ function HomePage({ navigation }) {
         Alert.alert('Error', error.message);
       }
     }
-    
+
   }
 
   const fetchMarkers = async () => {
@@ -109,7 +109,6 @@ function HomePage({ navigation }) {
           </View>
         </View>
       </Modal>
-      
     </View>
   );
 }
