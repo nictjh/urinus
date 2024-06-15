@@ -28,24 +28,14 @@ function HomePage({ navigation }) {
         return;
       }
     })();
+    fetchMarkers()
   }, []);
 
   const centerMapOnUserLocation = async () => {
-    // commenting out da debugging
 
-    // console.log('centerMapOnUserLocation');
     let location = await Location.getCurrentPositionAsync({
       accuracy: Location.Accuracy.Balanced
     });
-    // console.log("New location:", location.coords);
-    // console.log("Current region state:", region);
-
-    // setRegion({
-    //   latitude: location.coords.latitude,
-    //   longitude: location.coords.longitude,
-    //   latitudeDelta: 0.01,
-    //   longitudeDelta: 0.01,
-    // });
 
     const newRegion = {
       latitude: location.coords.latitude,
@@ -57,38 +47,22 @@ function HomePage({ navigation }) {
     mapRef.current?.animateToRegion(newRegion, 500); // ya boi is forcing a map animation here
   };
 
-  // useEffect(() => {
-  //   const initialize = async () => {
-  //     if (session?.user) {
-  //       await getProfile();
-  //       await fetchMarkers();
-  //     } else {
-  //       Alert.alert('Error', 'No user on the session!');
+  // async function getProfile() {
+  //   try{
+  //     const { data, error, status } = await supabase
+  //       .from('profiles')
+  //       .select(`username`)
+  //       .eq('id', session?.user.id)
+  //       .single()
+  //     if (error && status !== 406) {
+  //       throw error;
   //     }
-  //   };
-
-  //   initialize();
-  // }, [session]);
-
-  useEffect(() => { fetchMarkers() },[])
-
-  async function getProfile() {
-    try{
-      const { data, error, status } = await supabase
-        .from('profiles')
-        .select(`username`)
-        .eq('id', session?.user.id)
-        .single()
-      if (error && status !== 406) {
-        throw error;
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        Alert.alert('Error', error.message);
-      }
-    }
-
-  }
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       Alert.alert('Error', error.message);
+  //     }
+  //   }
+  // }
 
   const fetchMarkers = async () => {
     const { data, error } = await supabase
@@ -136,7 +110,7 @@ function HomePage({ navigation }) {
       </MapView>
       <TouchableOpacity style={styles.button} onPress={centerMapOnUserLocation}>
         <Image
-          source={require('../assets/userlocationbutton.png')} 
+          source={require('../assets/userlocationbutton.png')}
           style={styles.buttonImage}
         />
       </TouchableOpacity>
@@ -187,9 +161,9 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
   },
   buttonImage: {
-    width: 38,        // Set the width of the button image
-    height: 38,       // Set the height of the button image
-    resizeMode: 'contain', // Ensures the image is scaled correctly within the button area
+    width: 38,
+    height: 38,
+    resizeMode: 'contain',
   },
   buttonContainer: {
     position: 'absolute',

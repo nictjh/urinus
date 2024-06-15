@@ -31,7 +31,7 @@ function AppNavigator() {
             <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="Auth" component={AuthStack} options={{ headerShown: false }} />
         </Stack.Navigator>
-        
+
     );
 }
 
@@ -45,7 +45,7 @@ function AppNavigator() {
 //         }
 //     }, [session, navigation]);
 
-//     return session ? <Component /> : null; 
+//     return session ? <Component /> : null;
 // };
 
 const AuthStack = () => {
@@ -62,7 +62,7 @@ const TabNavigator = () => {
 
     const { session } = useAuth();
     const navigation = useNavigation();
-    
+
     const handlePress = (targetScreen) => {
         if (!session) {
             Alert.alert(
