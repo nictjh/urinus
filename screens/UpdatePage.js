@@ -6,7 +6,7 @@ import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
 
-const UpdatePage = () => {
+function UpdatePage() {
   const { session } = useAuth();
   const [loading, setLoading] = useState(true);
   const [username, setUsername] = useState('');

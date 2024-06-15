@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
 
-const LoginPage = () => {
+function LoginPage() {
     const navigation = useNavigation();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -15,13 +15,12 @@ const LoginPage = () => {
           email: email,
           password: password,
         })
-    
+
         if (error) Alert.alert(error.message);
         else {
             navigation.navigate('Tabs', { screen: 'Home' })
             setLoading(false)
-        }; 
-      
+        };
   };
 
     return (
@@ -80,18 +79,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 10, 
+        marginTop: 10,
     },
     signInButton: {
-        backgroundColor: '#007BFF', 
+        backgroundColor: '#007BFF',
         color: 'white',
         padding: 15,
         borderRadius: 10,
-        width: '100%', 
-        textAlign: 'center', 
+        width: '100%',
+        textAlign: 'center',
     },
     signUpText: {
-        marginRight: 5, 
+        marginRight: 5,
     },
 });
 
