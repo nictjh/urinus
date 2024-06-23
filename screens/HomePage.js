@@ -13,9 +13,11 @@ function HomePage({ navigation }) {
   const [markers, setMarkers] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
-
   const mapRef = useRef(null);
-
+  const featureIcons = {
+    bidet: require('../assets/bidet.png'),
+    handdryer: require('../assets/hand-dryer.png'),
+  };
   // for debugging purposes
   const [errorMsg, setErrorMsg] = useState(null);
 
@@ -65,14 +67,23 @@ function HomePage({ navigation }) {
   // }
 
   const fetchMarkers = async () => {
+    // This function is used to fetch markers from backend
     const { data, error } = await supabase
-      .from('venues')
+      .from('toilets')
       .select('*');
     if (error) {
       console.log('Error fetching markers:', error);
     } else {
       setMarkers(data);
     }
+  };
+
+  const renderFeatureIcon = (featureAvailable, featureType) => {
+    if (featureAvailable) {
+      let iconSource = featureIcons[featureType];
+      return <Image source={iconSource} style={{ width: 24, height: 24 }} />;
+    }
+    return null;
   };
 
   const handleMarkerPress = (marker) => {
@@ -83,6 +94,13 @@ function HomePage({ navigation }) {
   const handleModalClose = () => {
     setModalVisible(false);
     setSelectedMarker(null); // Reset selected marker when modal closes
+  };
+
+  const handleSeeMorePress = () => {
+    setModalVisible(false);
+    setTimeout(() => {
+      navigation.navigate('Details', { marker: selectedMarker });
+    }, 300);
   };
 
   return (
@@ -101,7 +119,7 @@ function HomePage({ navigation }) {
       >
         {markers.map((marker) => (
           <Marker
-            key={marker.marker_id}
+            key={marker.id}
             coordinate={{ latitude: marker.latitude, longitude: marker.longitude }}
             description={marker.roomcode}
             onPress={() => handleMarkerPress(marker)}
@@ -120,17 +138,40 @@ function HomePage({ navigation }) {
         visible={modalVisible}
         onRequestClose={handleModalClose}
       >
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            {selectedMarker && (
-              <>
-                <Text>{selectedMarker.roomname || 'No room name available'}</Text>
-                <Text>{selectedMarker.roomcode}</Text>
-                <Button title="Close" onPress={handleModalClose} />
-              </>
-            )}
+        {selectedMarker && (
+          <View style={styles.modalContainer} >
+            <View style={styles.modalContent} >
+              <Image
+                source={require('../assets/testpic.jpg')}
+                style={styles.modalImage}
+              />
+              <View style={styles.infoContainer}>
+                <Text style={styles.modalTitle}>{selectedMarker.room_name || 'No room name available'}</Text>
+                <Text style={styles.modalRating}>
+                  {selectedMarker.total_people_rated > 0 ?
+                    (selectedMarker.total_cumulative_rating / selectedMarker.total_people_rated).toFixed(1) + ' ★' :
+                    'No ratings yet'}
+                </Text>
+                <View style={styles.featuresContainer}>
+                  {renderFeatureIcon(selectedMarker.bidet, 'bidet')}
+                  {renderFeatureIcon(selectedMarker.handdryer, 'handdryer')}
+                </View>
+                <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
+                <Image
+                  source={require('../assets/close.png')}
+                  style={styles.closeButtonImage}
+                />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.seeMoreButton}
+                  onPress={handleSeeMorePress}
+                >
+                  <Text style={styles.seeMoreButtonText}>See More</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
-        </View>
+        )}
       </Modal>
     </View>
   );
@@ -172,27 +213,69 @@ const styles = StyleSheet.create({
     width: '30%',
     backgroundColor: '#007BFF',
   },
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 22,
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: "white",
-    borderRadius: 20,
-    padding: 35,
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2
-    },
-    shadowOpacity: 0.25,
+  modalContainer: {
+    position: 'absolute',
+    left: 10,
+    right: 10,
+    bottom: 90,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.8,
     shadowRadius: 4,
-    elevation: 5
-  }
+    elevation: 5,
+  },
+  modalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 5,
+    marginRight: 20,
+  },
+  infoContainer: {
+    flex: 1,
+    justifyContent: 'space-around',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  modalRating: {
+    fontSize: 16,
+    color: '#333',
+    marginBottom: 5,
+  },
+  featuresContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    padding: 10,
+  },
+  closeButtonImage: {
+    width: 24,
+    height: 24,
+  },
+  seeMoreButton: {
+    padding: 10,
+    marginTop: 10,
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  seeMoreButtonText: {
+    color: 'white',
+    fontSize: 16,
+  },
 });
 
 export default HomePage;
