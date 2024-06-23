@@ -7,6 +7,7 @@ import SignupPage from '../screens/SignupPage';
 import UpdatePage from '../screens/UpdatePage';
 import HomePage from '../screens/HomePage';
 import ReviewPage from '../screens/ReviewPage';
+import DetailsScreen from '../screens/DetailsScreen';
 const homeIcon = require('../assets/navigation.png');
 const rateIcon = require('../assets/brand-twitter.png');
 const profileIcon = require('../assets/user-circle.png');
@@ -58,6 +59,15 @@ const AuthStack = () => {
     );
 };
 
+const HomeStack = () => {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen name="Map" component={HomePage} options={{ headerShown: false }}/>
+        <Stack.Screen name="Details" component={DetailsScreen} options={{ title: 'Toilet Information' }} />
+      </Stack.Navigator>
+    );
+  };
+
 const TabNavigator = () => {
 
     const { session } = useAuth();
@@ -79,8 +89,8 @@ const TabNavigator = () => {
     };
 
     return (
-        <Tab.Navigator initialRouteName="Home">
-        <Tab.Screen name="Home" component={HomePage} options={{
+        <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
+        <Tab.Screen name="Home" component={HomeStack} options={{
             title: 'Home',
             tabBarIcon: ({ focused }) => (
                 <Image source={homeIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
