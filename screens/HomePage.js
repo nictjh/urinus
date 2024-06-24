@@ -6,6 +6,7 @@ import { useAuth } from './AuthContext';
 import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
 import * as Location from 'expo-location';
+import { Dropdown } from 'react-native-searchable-dropdown-kj';
 
 function HomePage({ navigation }) {
 
@@ -14,6 +15,7 @@ function HomePage({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const mapRef = useRef(null);
+
   const featureIcons = {
     bidet: require('../assets/bidet.png'),
     handdryer: require('../assets/hand-dryer.png'),
@@ -47,6 +49,33 @@ function HomePage({ navigation }) {
     };
 
     mapRef.current?.animateToRegion(newRegion, 500); // ya boi is forcing a map animation here
+  };
+
+  const renderItem = (item) => {
+    return (
+      <View style={styles.item}>
+        {(
+          <View>
+              <Image
+                source={require('../assets/testpic.jpg')}
+                style={styles.dropDownImage}
+              />
+            <View style={styles.dropDownInfoContainer}>
+              <Text style={styles.modalTitle}>{item.room_name || 'No room name available'}</Text>
+              <Text style={styles.modalRating}>
+                {item.total_people_rated > 0 ?
+                  (item.total_cumulative_rating / item.total_people_rated).toFixed(1) + ' ★' :
+                  'No ratings yet'}
+              </Text>
+              <View style={styles.featuresContainer}>
+                {renderFeatureIcon(item.bidet, 'bidet')}
+                {renderFeatureIcon(item.handdryer, 'handdryer')}
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
+    );
   };
 
   // async function getProfile() {
@@ -103,6 +132,12 @@ function HomePage({ navigation }) {
     }, 300);
   };
 
+  const handleDropDownItemPress = (item) => {
+    setTimeout(() => {
+      navigation.navigate('Details', { marker: item });
+    }, 300);
+  };
+
   return (
     <View style={styles.container}>
       <MapView
@@ -126,6 +161,23 @@ function HomePage({ navigation }) {
           />
         ))}
       </MapView>
+      <Dropdown
+        style={styles.dropdown}
+        placeholderStyle={styles.placeholderStyle}
+        selectedTextStyle={styles.selectedTextStyle}
+        inputSearchStyle={styles.inputSearchStyle}
+        data={markers}
+        search
+        maxHeight={500}
+        labelField="room_name"
+        valueField="id"
+        placeholder="Search for toilets"
+        searchPlaceholder="Search for your toilets :)"
+        onChange={item => {
+          handleDropDownItemPress(item);
+        }}
+        renderItem={renderItem}
+      />
       <TouchableOpacity style={styles.button} onPress={centerMapOnUserLocation}>
         <Image
           source={require('../assets/userlocationbutton.png')}
@@ -157,10 +209,10 @@ function HomePage({ navigation }) {
                   {renderFeatureIcon(selectedMarker.handdryer, 'handdryer')}
                 </View>
                 <TouchableOpacity style={styles.closeButton} onPress={handleModalClose}>
-                <Image
-                  source={require('../assets/close.png')}
-                  style={styles.closeButtonImage}
-                />
+                  <Image
+                    source={require('../assets/close.png')}
+                    style={styles.closeButtonImage}
+                  />
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.seeMoreButton}
@@ -274,6 +326,53 @@ const styles = StyleSheet.create({
   },
   seeMoreButtonText: {
     color: 'white',
+    fontSize: 16,
+  },
+  dropdown: {
+    margin: 16,
+    height: 50,
+    width: '80%',
+    position: 'absolute',
+    top: 50,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+
+    elevation: 2,
+  },
+  dropDownInfoContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  item: {
+    padding: 17,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  textItem: {
+    flex: 1,
+    fontSize: 16,
+  },
+  dropDownImage: {
+    width: 50,
+    height: 50,
+  },
+  placeholderStyle: {
+    fontSize: 16,
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+  },
+  inputSearchStyle: {
+    height: 40,
     fontSize: 16,
   },
 });
