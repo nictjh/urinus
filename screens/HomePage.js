@@ -54,14 +54,14 @@ function HomePage({ navigation }) {
   const renderItem = (item) => {
     return (
       <View style={styles.item}>
-        {(
-          <View>
-              <Image
-                source={require('../assets/testpic.jpg')}
-                style={styles.dropDownImage}
-              />
-            <View style={styles.dropDownInfoContainer}>
-              <Text style={styles.modalTitle}>{item.room_name || 'No room name available'}</Text>
+        <View style={styles.dropDownContainer}>
+          <Image
+            source={require('../assets/testpic.jpg')}
+            style={styles.dropDownImage}
+          />
+          <View style={styles.dropDownInfoContainer}>
+            <Text style={styles.modalTitle}>{item.room_name || 'No room name available'}</Text>
+            <View style={styles.dropDownIconsContainer}>
               <Text style={styles.modalRating}>
                 {item.total_people_rated > 0 ?
                   (item.total_cumulative_rating / item.total_people_rated).toFixed(1) + ' ★' :
@@ -73,7 +73,7 @@ function HomePage({ navigation }) {
               </View>
             </View>
           </View>
-        )}
+        </View>
       </View>
     );
   };
@@ -169,8 +169,8 @@ function HomePage({ navigation }) {
         data={markers}
         search
         maxHeight={500}
-        labelField="room_name"
         valueField="id"
+        labelField="room_name"
         placeholder="Search for toilets"
         searchPlaceholder="Search for your toilets :)"
         onChange={item => {
@@ -347,23 +347,30 @@ const styles = StyleSheet.create({
 
     elevation: 2,
   },
+  dropDownContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   dropDownInfoContainer: {
-    flex: 1,
-    justifyContent: 'flex-end',
+    flex: 3,
+    paddingLeft: 15,
+  },
+  dropDownIconsContainer: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between',
   },
   item: {
     padding: 17,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flex: 1,
   },
   textItem: {
     flex: 1,
     fontSize: 16,
   },
   dropDownImage: {
-    width: 50,
-    height: 50,
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: 10,
   },
   placeholderStyle: {
     fontSize: 16,
