@@ -1,12 +1,12 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Alert, Image, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Image, Switch } from 'react-native';
 //import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
 import * as Location from 'expo-location';
-import { Dropdown, MultiSelect } from 'react-native-searchable-dropdown-kj';
+import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import { Picker } from '@react-native-picker/picker';
 import { color } from '@rneui/themed/dist/config';
 
@@ -219,6 +219,9 @@ function HomePage({ navigation }) {
           style={styles.filterButtonImage}
         />
       </TouchableOpacity>
+      {(filterModalVisible || modalVisible) && (
+        <View style={styles.overlay} />
+      )}
       <Modal
         animationType="slide"
         transparent={true}
@@ -552,6 +555,15 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 18,
     padding: 5,
+  },
+  overlay: { // using this cos its basically the same as the blur module
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 1  // ensuring da overlay is below the modal but above other content
   },
 });
 
