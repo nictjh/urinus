@@ -7,7 +7,7 @@ import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
 import * as Location from 'expo-location';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
-import { Picker } from '@react-native-picker/picker';
+import RNPickerSelect from 'react-native-picker-select';
 import { color } from '@rneui/themed/dist/config';
 
 
@@ -22,9 +22,8 @@ function HomePage({ navigation }) {
   const [filters, setFilters] = useState({
     bidet: false,
     handdryer: false,
-    room_code: 'All', // will hold 'COM1', 'COM2', or 'COM3'
+    room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
   });
-  const [filteredList, setFilteredList] = useState([]); // bro we are USING USESTATE SO MUCH HAHAHAHAHA
 
 
   const featureIcons = {
@@ -49,7 +48,7 @@ function HomePage({ navigation }) {
   const centerMapOnUserLocation = async () => {
 
     let location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced
+      accuracy: Location.Accuracy.Balanced,
     });
 
     const newRegion = {
@@ -127,15 +126,12 @@ function HomePage({ navigation }) {
       if (error) {
         console.log('Error fetching markers:', error);
         setMarkers([]); // Handle error by setting markers to an empty array
-        setFilteredList([]);
       } else {
         setMarkers(data || []); // Handle no data scenario
-        setFilteredList(data || []);
       }
     } catch (error) {
       console.log('Supabase error:', error.message);
       setMarkers([]);
-      setFilteredList([]);
     }
   };
 
@@ -181,8 +177,9 @@ function HomePage({ navigation }) {
         }}
         ref={mapRef}
         style={styles.map}
-        showsUserLocation={false}
+        showsUserLocation={true}
         showsCompass={true}
+        showsMyLocationButton={false}
       >
         {markers.map((marker) => (
           <Marker
@@ -246,18 +243,19 @@ function HomePage({ navigation }) {
             </View>
             <View style={styles.filterRow}>
               <Text style={styles.filterLabel}>Room Code</Text>
-              <Picker
-                selectedValue={filters.room_code}
-                style={styles.filterPicker}
-                onValueChange={(itemValue, itemIndex) => setFilters({ ...filters, room_code: itemValue })}
-              >
-                <Picker.Item label="All" value="All" />
-                <Picker.Item label="COM1" value="COM1" />
-                <Picker.Item label="COM2" value="COM2" />
-                <Picker.Item label="COM3" value="COM3" />
-              </Picker>
+              <RNPickerSelect
+                onValueChange={(itemValue) => setFilters({ ...filters, room_code: itemValue })}
+                items={[
+                  { label: 'All', value: 'All' },
+                  { label: 'COM1', value: 'COM1' },
+                  { label: 'COM2', value: 'COM2' },
+                  { label: 'COM3', value: 'COM3' },
+                ]}
+                style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
+                value={filters.room_code}
+              />
             </View>
-
             <View style={styles.filterApplyButton}>
               <TouchableOpacity onPress={() => {
                 fetchMarkers();
@@ -510,15 +508,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     paddingRight: 10,
   },
-  filterPicker: {
-    height: 50,
-    width: 120,
-    overflow: 'hidden',
-    borderRadius: 10,
-    backgroundColor: 'lightgray',
-    color: 'black',
-    opacity: 0.8,
-  },
   filterButton: {
     margin: 16,
     height: 50,
@@ -566,5 +555,30 @@ const styles = StyleSheet.create({
     zIndex: 1  // ensuring da overlay is below the modal but above other content
   },
 });
+
+const pickerSelectStyles = { // for the dropdown picker roomie pls dont put normal styles hereeeee
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30,
+    width: 120,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: 'purple',
+    borderRadius: 8,
+    color: 'black',
+    paddingRight: 30,
+    width: 120,
+  },
+};
 
 export default HomePage;
