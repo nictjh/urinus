@@ -1,5 +1,5 @@
 import React from 'react';
-import { Button, View, Text } from 'react-native';
+import { Button, View, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../screens/AuthContext';
 import { supabase } from  '../lib/supabase';
 // const markerFile =  require('../markers.json');
@@ -8,11 +8,19 @@ function ReviewPage() {
     const { session } = useAuth();
 
     return (
-        <View>
+        <View style={styles.container}>
             <Text>Review Page</Text>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 20,
+        paddingTop:50
+    }
+})
+
 
 // add markers to supabase
 // Not in use after insert!

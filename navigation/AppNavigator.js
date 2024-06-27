@@ -8,9 +8,11 @@ import UpdatePage from '../screens/UpdatePage';
 import HomePage from '../screens/HomePage';
 import ReviewPage from '../screens/ReviewPage';
 import DetailsScreen from '../screens/DetailsScreen';
+import CardsPage from '../screens/CardsPage';
 const homeIcon = require('../assets/navigation.png');
 const rateIcon = require('../assets/brand-twitter.png');
 const profileIcon = require('../assets/user-circle.png');
+const cardsIcon = require('../assets/article.png');
 import { useAuth } from '../screens/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -90,37 +92,39 @@ const TabNavigator = () => {
 
     return (
         <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-        <Tab.Screen name="Home" component={HomeStack} options={{
-            title: 'Home',
-            tabBarIcon: ({ focused }) => (
-                <Image source={homeIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
-            ),
-        }} />
+            <Tab.Screen name="Home" component={HomeStack} options={{
+                title: 'Explore',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={homeIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+            }} />
 
-        <Tab.Screen name="Review" component={ReviewPage} options={{
-            title: 'Review',
-            tabBarIcon: ({ focused }) => (
-                <Image source={rateIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
-            ),
-            tabBarButton: (props) => session ? (
-                <TouchableOpacity {...props} />
-            ) : (
-                <TouchableOpacity {...props} onPress={() => handlePress("Review")} />
-            )
-        }} />
+            <Tab.Screen name="ReviewCards" component={CardsPage} options={{
+                title: 'Updates',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={cardsIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+            }} />
 
-        <Tab.Screen name="Profile" component={UpdatePage} options={{
-            title: 'Update',
-            tabBarIcon: ({ focused }) => (
-                <Image source={profileIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
-            ),
-            tabBarButton: (props) => session ? (
-                <TouchableOpacity {...props} />
-            ) : (
-                <TouchableOpacity {...props} onPress={() => handlePress("Profile")} />
-            )
-        }} />
-    </Tab.Navigator>
+            <Tab.Screen name="Review" component={ReviewPage} options={{
+                title: 'Submit',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={rateIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+            }} />
+
+            <Tab.Screen name="Profile" component={UpdatePage} options={{
+                title: 'Profile',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={profileIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+                tabBarButton: (props) => session ? (
+                    <TouchableOpacity {...props} />
+                ) : (
+                    <TouchableOpacity {...props} onPress={() => handlePress("Profile")} />
+                )
+            }} />
+        </Tab.Navigator>
     );
 }
 
