@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, Button, StyleSheet, TouchableOpacity, Modal, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert, Image, Switch } from 'react-native';
 //import MapView, { Marker } from 'react-native-maps';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
@@ -7,6 +7,9 @@ import MapView from '../map/mymap';
 import Marker from '../map/mymapMar';
 import * as Location from 'expo-location';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
+import RNPickerSelect from 'react-native-picker-select';
+import { color } from '@rneui/themed/dist/config';
+
 
 function HomePage({ navigation }) {
 
@@ -15,6 +18,13 @@ function HomePage({ navigation }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMarker, setSelectedMarker] = useState(null);
   const mapRef = useRef(null);
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [filters, setFilters] = useState({
+    bidet: false,
+    handdryer: false,
+    room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
+  });
+
 
   const featureIcons = {
     bidet: require('../assets/bidet.png'),
@@ -38,7 +48,7 @@ function HomePage({ navigation }) {
   const centerMapOnUserLocation = async () => {
 
     let location = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced
+      accuracy: Location.Accuracy.Balanced,
     });
 
     const newRegion = {
@@ -54,26 +64,26 @@ function HomePage({ navigation }) {
   const renderItem = (item) => {
     return (
       <View style={styles.item}>
-        {(
-          <View>
-              <Image
-                source={require('../assets/testpic.jpg')}
-                style={styles.dropDownImage}
-              />
-            <View style={styles.dropDownInfoContainer}>
-              <Text style={styles.modalTitle}>{item.room_name || 'No room name available'}</Text>
-              <Text style={styles.modalRating}>
-                {item.total_people_rated > 0 ?
-                  (item.total_cumulative_rating / item.total_people_rated).toFixed(1) + ' ★' :
-                  'No ratings yet'}
-              </Text>
-              <View style={styles.featuresContainer}>
-                {renderFeatureIcon(item.bidet, 'bidet')}
-                {renderFeatureIcon(item.handdryer, 'handdryer')}
-              </View>
+        <View style={styles.dropDownContainer}>
+          <View style={styles.dropDownIconsContainer}>
+            <Image
+              source={require('../assets/testpic.jpg')}
+              style={styles.dropDownImage}
+            />
+            <View style={styles.dropDownFeaturesContainer}>
+              {renderFeatureIcon(item.bidet, 'bidet')}
+              {renderFeatureIcon(item.handdryer, 'handdryer')}
             </View>
           </View>
-        )}
+          <View style={styles.dropDownInfoContainer}>
+            <Text style={styles.modalTitle}>{item.room_name || 'No room name available'}</Text>
+            <Text style={styles.modalRating}>
+              {item.total_people_rated > 0 ?
+                (item.total_cumulative_rating / item.total_people_rated).toFixed(1) + ' ★' :
+                'No ratings yet'}
+            </Text>
+          </View>
+        </View>
       </View>
     );
   };
@@ -96,14 +106,32 @@ function HomePage({ navigation }) {
   // }
 
   const fetchMarkers = async () => {
-    // This function is used to fetch markers from backend
-    const { data, error } = await supabase
-      .from('toilets')
-      .select('*');
-    if (error) {
-      console.log('Error fetching markers:', error);
-    } else {
-      setMarkers(data);
+    try {
+      let query = supabase
+        .from('toilets')
+        .select('*');
+
+      if (filters.bidet) {
+        query = query.filter('bidet', 'eq', true);
+      }
+      if (filters.handdryer) {
+        query = query.filter('handdryer', 'eq', true);
+      }
+      if (filters.room_code !== 'All') {
+        query = query.filter('room_code', 'eq', filters.room_code);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.log('Error fetching markers:', error);
+        setMarkers([]); // Handle error by setting markers to an empty array
+      } else {
+        setMarkers(data || []); // Handle no data scenario
+      }
+    } catch (error) {
+      console.log('Supabase error:', error.message);
+      setMarkers([]);
     }
   };
 
@@ -149,8 +177,9 @@ function HomePage({ navigation }) {
         }}
         ref={mapRef}
         style={styles.map}
-        showsUserLocation
-        showsCompass
+        showsUserLocation={true}
+        showsCompass={true}
+        showsMyLocationButton={false}
       >
         {markers.map((marker) => (
           <Marker
@@ -169,8 +198,8 @@ function HomePage({ navigation }) {
         data={markers}
         search
         maxHeight={500}
-        labelField="room_name"
         valueField="id"
+        labelField="room_name"
         placeholder="Search for toilets"
         searchPlaceholder="Search for your toilets :)"
         onChange={item => {
@@ -178,6 +207,66 @@ function HomePage({ navigation }) {
         }}
         renderItem={renderItem}
       />
+      <TouchableOpacity
+        style={styles.filterButton}
+        onPress={() => setFilterModalVisible(true)}
+      >
+        <Image
+          source={require('../assets/filter.png')}
+          style={styles.filterButtonImage}
+        />
+      </TouchableOpacity>
+      {(filterModalVisible || modalVisible) && (
+        <View style={styles.overlay} />
+      )}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={filterModalVisible}
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <View style={styles.filterModalView}>
+          <View style={styles.filterColumn}>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Bidet</Text>
+              <Switch
+                value={filters.bidet}
+                onValueChange={(newValue) => setFilters({ ...filters, bidet: newValue })}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Hand Dryer</Text>
+              <Switch
+                value={filters.handdryer}
+                onValueChange={(newValue) => setFilters({ ...filters, handdryer: newValue })}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Room Code</Text>
+              <RNPickerSelect
+                onValueChange={(itemValue) => setFilters({ ...filters, room_code: itemValue })}
+                items={[
+                  { label: 'All', value: 'All' },
+                  { label: 'COM1', value: 'COM1' },
+                  { label: 'COM2', value: 'COM2' },
+                  { label: 'COM3', value: 'COM3' },
+                ]}
+                style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
+                value={filters.room_code}
+              />
+            </View>
+            <View style={styles.filterApplyButton}>
+              <TouchableOpacity onPress={() => {
+                fetchMarkers();
+                setFilterModalVisible(false);
+              }}>
+                <Text style={styles.filterApplyText}>Apply Filters</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal >
       <TouchableOpacity style={styles.button} onPress={centerMapOnUserLocation}>
         <Image
           source={require('../assets/userlocationbutton.png')}
@@ -225,7 +314,7 @@ function HomePage({ navigation }) {
           </View>
         )}
       </Modal>
-    </View>
+    </View >
   );
 }
 
@@ -331,9 +420,10 @@ const styles = StyleSheet.create({
   dropdown: {
     margin: 16,
     height: 50,
-    width: '80%',
+    width: '65%',
     position: 'absolute',
     top: 50,
+    left: "1%",
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 12,
@@ -347,23 +437,37 @@ const styles = StyleSheet.create({
 
     elevation: 2,
   },
+  dropDownContainer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
   dropDownInfoContainer: {
+    flex: 3,
+    paddingLeft: 15,
+  },
+  dropDownIconsContainer: {
     flex: 1,
-    justifyContent: 'flex-end',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  dropDownImage: {
+    height: 50,
+    width: 50,
+    borderRadius: 10,
+    paddingBottom: 50,
+  },
+  dropDownFeaturesContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    paddingTop: 10,
   },
   item: {
     padding: 17,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flex: 1,
   },
   textItem: {
     flex: 1,
     fontSize: 16,
-  },
-  dropDownImage: {
-    width: 50,
-    height: 50,
   },
   placeholderStyle: {
     fontSize: 16,
@@ -375,6 +479,106 @@ const styles = StyleSheet.create({
     height: 40,
     fontSize: 16,
   },
+  filterModalView: {
+    marginHorizontal: 20,
+    marginTop: 150,
+    backgroundColor: "white",
+    borderRadius: 20,
+    padding: 35,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  filterColumn: {
+    flexDirection: 'column',
+  },
+  filterRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  filterLabel: {
+    fontSize: 18,
+    paddingRight: 10,
+  },
+  filterButton: {
+    margin: 16,
+    height: 50,
+    width: 50,
+    position: 'absolute',
+    top: 50,
+    right: "10%",
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    alignContent: 'center',
+    flexDirection: 'column',
+  },
+  filterButtonImage: {
+    width: 30,
+    height: 30,
+    resizeMode: 'contain',
+  },
+  filterApplyButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    padding: 5,
+  },
+  filterApplyText: {
+    color: 'white',
+    fontSize: 18,
+    padding: 5,
+  },
+  overlay: { // using this cos its basically the same as the blur module
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    zIndex: 1  // ensuring da overlay is below the modal but above other content
+  },
 });
+
+const pickerSelectStyles = { // for the dropdown picker roomie pls dont put normal styles hereeeee
+  inputIOS: {
+    fontSize: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 4,
+    color: 'black',
+    paddingRight: 30,
+    width: 120,
+  },
+  inputAndroid: {
+    fontSize: 16,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+    borderColor: 'purple',
+    borderRadius: 8,
+    color: 'black',
+    paddingRight: 30,
+    width: 120,
+  },
+};
 
 export default HomePage;
