@@ -16,6 +16,10 @@ function DetailsScreen({ route }) {
   const [averageRating, setAverageRating] = useState(0);
   const [reviewCounts, setReviewCounts] = useState({});
   const [expanded, setExpanded] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [currentCubicle, setCurrentCubicle] = useState(null); // to pass correct values
+  const [cubicleStatus, setCubicleStatus] = useState(false); // to refresh and remount components
+
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -60,6 +64,65 @@ function DetailsScreen({ route }) {
     }
   };
 
+  const handleIssue = async (selectedIssue, uuid, cubNumber) => {
+    // Handle report button (two scenarios, 'clog' or 'tissue')
+    console.log(uuid);
+    setModalVisible(false);
+    // Insert report into errors table
+    try {
+      const {data , error, status} = await supabase
+        .from('errors')
+        .insert({
+          toilet_uuid: uuid,
+          cubicle_no: cubNumber,
+          description: "Instant report: " + selectedIssue,
+        });
+      if (error) {
+        console.log("Failed to insert data into errors table", error);
+      }
+      console.log("Successfully inserted report!", data);
+    } catch (error) {
+      console.log("Error with database operation", error);
+    }
+
+    // Set cubicle status
+    if (selectedIssue === "Tissue") {
+      try {
+        const { data, error, status } = await supabase
+          .from('cubicles')
+          .update({ tissue: false })
+          .eq('cubicle_no', cubNumber)
+          .eq('toilet_uuid', uuid);
+
+        if (error) {
+          console.error("Error updating tissue status", error);
+        }
+        console.log('Update successful', data);
+      } catch (error) {
+        console.error("Caught an error during the update operation", error);
+      }
+    } else if (selectedIssue === "Clog") {
+      try {
+        const { data, error, status } = await supabase
+          .from('cubicles')
+          .update({ status: false })
+          .eq('cubicle_no', cubNumber)
+          .eq('toilet_uuid', uuid);
+
+        if (error) {
+          console.error("Error updating status", error);
+        }
+        console.log('Update successful', data);
+      } catch (error) {
+        console.error("Caught an error during the update operation", error);
+      }
+    } else {
+      console.log("Not Handled!");
+    }
+    // I need to setState to i can refresh everything
+    setCubicleStatus(!cubicleStatus);
+  };
+
   // Creating star component
   const RatingDisplay = ({rating, count}) => {
     return (
@@ -83,9 +146,9 @@ function DetailsScreen({ route }) {
   // Creating display distri
   const ReviewBar = ({ starCount, percentage }) => {
     return (
-      <View style={styles.barContainer}>
+      <View style={styles.reviewBarContainer}>
         <Text style={styles.starCount}>{starCount} Star</Text>
-        <View style={styles.bar}>
+        <View style={styles.backgroundBar}>
           <View style={[styles.filledBar, { width: `${percentage}%` }]} />
         </View>
       </View>
@@ -108,7 +171,7 @@ function DetailsScreen({ route }) {
     );
   };
 
-  const ReviewCard = ({ review }) => {
+  const ReviewCard = ({ review }) => { // Future enhancements to change reviewerName
     return (
       <View style={styles.reviewCard}>
         <Text style={styles.reviewerName}>Annonymous Butterfly</Text>
@@ -125,6 +188,83 @@ function DetailsScreen({ route }) {
     );
   };
 
+  const CubicleCard = ({ cubicle }) => {
+    return (
+      <View style={styles.cubicleCard}>
+         {!cubicle.status && (
+          <View style={styles.reportOverlay}>
+            <Text style={styles.reportOverlayText}>X</Text>
+          </View>
+        )}
+        <Image source={require('../assets/toiletBowl.jpg')} style={styles.toiletImage} />
+        <View style={styles.cubicleDetailsContainer}>
+          <Text style={styles.cubicleTitle}>Cubicle No: {cubicle.cubicle_no}</Text>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/toilet.png')} style={styles.cubicleIcon} />
+            <Text> Toilet Bowl</Text>
+          </View>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/spray.png')} style={styles.cubicleIcon} />
+            <Text> Bidet: {cubicle.bidet ? 'Available' : 'Not Available'}</Text>
+          </View>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/wifi.png')} style={styles.cubicleIcon} />
+            <Text> Wi-Fi: {cubicle.wifi_connectivity ? `${cubicle.wifi_connectivity} Bars` : 'No Wi-Fi'}</Text>
+          </View>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/disabled.png')} style={styles.cubicleIcon} />
+            <Text> Handicapped: {cubicle.handicap ? 'Accessible' : 'Not Accessible'}</Text>
+          </View>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/toilet-paper.png')} style={styles.cubicleIcon} />
+            <Text> Tissue: {cubicle.tissue ? 'Available' : 'No Tissue'}</Text>
+          </View>
+          <View style={styles.amenityCubText}>
+            <Image source={require('../assets/gender-male.png')} style={styles.cubicleIcon} />
+            <Text> Gender: {cubicle.gender}</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.reportButton} onPress={() => {
+          setCurrentCubicle(cubicle.cubicle_no);
+          setModalVisible(true);
+        }}>
+          <Text style={styles.reportButtonText}>Report</Text>
+        </TouchableOpacity>
+
+
+        <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+        >
+          <View style={styles.modalBackdrop}>
+            <View style={styles.reportModal}>
+              <Text style={{ marginBottom: 20 }}>Select an issue:</Text>
+              <Button
+                title="Clog Toilet"
+                onPress={() => handleIssue('Clog', uuid, currentCubicle)}
+              />
+              <Button
+                title="No Tissue"
+                onPress={() => handleIssue('Tissue', uuid, currentCubicle)}
+              />
+              <Button
+                title="Cancel"
+                color="red"
+                onPress={() => setModalVisible(false)}
+              />
+            </View>
+          </View>
+        </Modal>
+
+
+      </View>
+    );
+  };
+
   const amenities = [
     { key: 'wifi', label: 'Wi-Fi', value: marker.avg_wifi_connectivity ? marker.avg_wifi_connectivity + " bars" : 'Unrated', emoji: '📶' },
     { key: 'bidet', label: 'Bidet', value: marker.bidet ? 'Available' : 'Unavailable', emoji: '🚽' },
@@ -135,49 +275,74 @@ function DetailsScreen({ route }) {
   ];
 
   useEffect(() => {
-    fetchCubicles();
+    fetchCubicles(uuid);
     fetchReviews();
-  }, [uuid])
+  }, [uuid, cubicleStatus])
 
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.card}>
-        <Image source={require('../assets/testpic.jpg')} style={styles.image} />
-      </View>
-      <RatingDisplay rating={averageRating} count={reviews.length} />
-      <ReviewDistribution reviews={reviewCounts} />
-
-      <View style={styles.reviewButContainer}>
-        <Button title='Submit a review' onPress={() => navigation.navigate('Review')}/>
-      </View>
-
-      {reviews.slice(0, expanded ? reviews.length : 1).map(review => (
-        <ReviewCard key={review.id} review={review} />
-      ))}
-      <View style={styles.toggleContainer}>
-        <TouchableOpacity onPress={toggleExpanded}>
-          <Text>{expanded ? "Hide" : "Show All Reviews"}</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.amenitiesContainer}>
-      {amenities.map((item, index) => (
-        <View key={index} style={styles.amenity}>
-          <Text style={styles.amenityText}>{item.emoji} {`${item.label}: ${item.value}`}</Text>
+    <View style={styles.outerContainer}>
+      <ScrollView style={styles.container}>
+        <View style={styles.toiletCard}>
+          <Image source={require('../assets/testpic.jpg')} style={styles.toiletMainImage} />
         </View>
-      ))}
-      </View>
+        <RatingDisplay rating={averageRating} count={reviews.length} />
+        <ReviewDistribution reviews={reviewCounts} />
 
-    </ScrollView>
+        <View style={styles.reviewButContainer}>
+          <TouchableOpacity
+            style={styles.submitReviewButton}
+            onPress={() => navigation.navigate('Review')}
+          >
+            <Image
+              source={require('../assets/circle-plus.png')}
+              style={{height: 25, width: 25, marginRight: 10}}
+            />
+            <Text style={styles.buttonText}>Submit a Review</Text>
+          </TouchableOpacity>
+        </View>
+
+        {reviews.slice(0, expanded ? reviews.length : 1).map(review => (
+          <ReviewCard key={review.id} review={review} />
+        ))}
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity onPress={toggleExpanded}>
+            <Text>{expanded ? "Hide" : "Show All Reviews"}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.sectionHeader}>Toilet Details</Text>
+        <View style={styles.amenitiesContainer}>
+          {amenities.map((item, index) => (
+            <View key={index} style={styles.amenity}>
+              <Text style={styles.amenityText}>{item.emoji} {`${item.label}: ${item.value}`}</Text>
+            </View>
+          ))}
+        </View>
+
+        <Text style={styles.sectionHeader}>Cubicle Details</Text>
+        {cubicles && cubicles.length > 0 ? (
+          cubicles.map((cubicle) => (
+            <CubicleCard key={cubicle.id} cubicle={cubicle} />
+          ))
+        ) : (
+          <Text style={styles.noDataText}>No cubicle details available.</Text>
+        )}
+
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  outerContainer: {
+    flex: 1
+  },
   container: {
     padding: 20,
+    flex: 1,
   },
-  card: {
+  toiletCard: {
     backgroundColor: 'white',
     borderRadius: 10,
     overflow: 'hidden',
@@ -189,7 +354,7 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     marginHorizontal: 20,
   },
-  image: {
+  toiletMainImage: {
     width: '100%',
     height: 200,
     resizeMode: 'cover'
@@ -203,7 +368,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginLeft: 10,
   },
-  barContainer: {
+  reviewBarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 5,
@@ -212,7 +377,7 @@ const styles = StyleSheet.create({
     width: 50,
     fontSize: 16,
   },
-  bar: {
+  backgroundBar: {
     flex: 1,
     height: 10,
     backgroundColor: 'lightgrey',
@@ -255,6 +420,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
   },
+  submitReviewButton: {
+    flexDirection: 'row',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+  },
+  buttonText: {
+    fontSize: 16,
+  },
   amenitiesContainer: {
     backgroundColor: 'white',
     padding: 10,
@@ -274,7 +449,110 @@ const styles = StyleSheet.create({
   amenityText: {
     marginLeft: 10,
     fontSize: 16
-  }
+  },
+  cubicleCard: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+    marginVertical: 5,
+    overflow: 'hidden',
+    alignItems: 'center',
+    padding: 10,
+  },
+  toiletImage: {
+    width: 140,
+    height: 140,
+    resizeMode: 'contain'
+  },
+  cubicleDetailsContainer: {
+    flex: 1,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  cubicleTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  amenityCubText: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  cubicleIcon: {
+    width: 30,
+    height: 30,
+    marginRight: 10,
+  },
+  reportButton: {
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 5,
+    margin: 5,
+    alignSelf: 'center',
+  },
+  reportButtonText: {
+    color: '#007bff',
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  sectionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginLeft: 20,
+    marginTop: 20,
+    marginBottom: 10,
+  },
+  noDataText: {
+    fontSize: 16,
+    color: 'grey',
+    textAlign: 'center',
+    marginTop: 20
+  },
+  reportModal: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalBackdrop: { // Focus mode (grey out backgrounds)
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reportOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 0, 0, 0.5)', // Semi-transparent red overlay
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  reportOverlayText: {
+    fontSize: 120,
+    color: 'white',
+    fontWeight: 'bold',
+  },
 })
 
 
