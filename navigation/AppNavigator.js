@@ -9,10 +9,12 @@ import HomePage from '../screens/HomePage';
 import ReviewPage from '../screens/ReviewPage';
 import DetailsScreen from '../screens/DetailsScreen';
 import CardsPage from '../screens/CardsPage';
+import AlertPage from '../screens/AlertPage';
 const homeIcon = require('../assets/navigation.png');
 const rateIcon = require('../assets/brand-twitter.png');
 const profileIcon = require('../assets/user-circle.png');
 const cardsIcon = require('../assets/article.png');
+const alertIcon = require('../assets/exclamation-circle.png');
 import { useAuth } from '../screens/AuthContext';
 import { useNavigation } from '@react-navigation/native';
 
@@ -92,17 +94,25 @@ const TabNavigator = () => {
 
     return (
         <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
-            <Tab.Screen name="Home" component={HomeStack} options={{
-                title: 'Explore',
-                tabBarIcon: ({ focused }) => (
-                    <Image source={homeIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
-                ),
-            }} />
 
             <Tab.Screen name="ReviewCards" component={CardsPage} options={{
                 title: 'Updates',
                 tabBarIcon: ({ focused }) => (
                     <Image source={cardsIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+            }} />
+
+            <Tab.Screen name="AlertNotif" component={AlertPage} options={{
+                title: 'Alerts',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={alertIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
+                ),
+            }} />
+
+            <Tab.Screen name="Home" component={HomeStack} options={{
+                title: 'Explore',
+                tabBarIcon: ({ focused }) => (
+                    <Image source={homeIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
                 ),
             }} />
 
