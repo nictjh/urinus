@@ -8,6 +8,7 @@ import Marker from '../map/mymapMar';
 import * as Location from 'expo-location';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
+import { Rating } from 'react-native-ratings';
 import { color } from '@rneui/themed/dist/config';
 
 
@@ -20,9 +21,14 @@ function HomePage({ navigation }) {
   const mapRef = useRef(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filters, setFilters] = useState({
+    minRating: 0, // will hold 0, 1, 2, 3, 4, or 5
     bidet: false,
     handdryer: false,
+    sanitaryBin: false,
+    noReports: true,
+    handicap: false,
     room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
+    gender: 'All', // will hold 'All', 'male' or 'female'
   });
 
 
@@ -106,34 +112,54 @@ function HomePage({ navigation }) {
   // }
 
   const fetchMarkers = async () => {
+    let query = supabase.from('toilets').select('*');
+
+    // Apply boolean filters
+    if (filters.bidet) {
+      query = query.is('bidet', true);
+    }
+    if (filters.handdryer) {
+      query = query.is('handdryer', true);
+    }
+    if (filters.sanitaryBin) {
+      query = query.is('sanitarybin', true);
+    }
+    if (filters.handicap) {
+      query = query.is('handicapped', true);
+    }
+
+    // Exclude toilets with reports if noReports is true
+    if (filters.noReports) {
+      query = query.eq('errors_reported', 0);
+    }
+
+    // Apply filters for room_code
+    if (filters.room_code !== 'All') {
+      query = query.eq('room_code', filters.room_code);
+    }
+
+    // Apply filters for gender
+    if (filters.gender !== 'All') {
+      query = query.eq('gender', filters.gender);
+    }
+
     try {
-      let query = supabase
-        .from('toilets')
-        .select('*');
-
-      if (filters.bidet) {
-        query = query.filter('bidet', 'eq', true);
-      }
-      if (filters.handdryer) {
-        query = query.filter('handdryer', 'eq', true);
-      }
-      if (filters.room_code !== 'All') {
-        query = query.filter('room_code', 'eq', filters.room_code);
-      }
-
       const { data, error } = await query;
+      if (error) throw error;
 
-      if (error) {
-        console.log('Error fetching markers:', error);
-        setMarkers([]); // Handle error by setting markers to an empty array
-      } else {
-        setMarkers(data || []); // Handle no data scenario
-      }
+      // Filter based on rating calculated from total_cumulative_rating and total_people_rated
+      const filteredData = data.filter(item => {
+        const rating = item.total_people_rated > 0 ? item.total_cumulative_rating / item.total_people_rated : 0;
+        return rating >= filters.minRating;
+      });
+
+      setMarkers(filteredData);
     } catch (error) {
-      console.log('Supabase error:', error.message);
-      setMarkers([]);
+      console.error('Error fetching markers:', error);
+      setMarkers([]); // Optionally clear markers or handle the error differently
     }
   };
+
 
   const renderFeatureIcon = (featureAvailable, featureType) => {
     if (featureAvailable) {
@@ -228,6 +254,20 @@ function HomePage({ navigation }) {
         <View style={styles.filterModalView}>
           <View style={styles.filterColumn}>
             <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Min. Rating</Text>
+              <View style={{ flexDirection: 'column' }}>
+                <Rating
+                  type="star"
+                  startingValue={filters.minRating}
+                  ratingCount={5}
+                  imageSize={25}
+                  tintColor={'#F0F0F0'}  // bg color
+                  onSwipeRating={(itemValue) => setFilters({ ...filters, minRating: itemValue })}
+                  onFinishRating={(itemValue) => setFilters({ ...filters, minRating: itemValue })}
+                />
+              </View>
+            </View>
+            <View style={styles.filterRow}>
               <Text style={styles.filterLabel}>Bidet</Text>
               <Switch
                 value={filters.bidet}
@@ -239,6 +279,27 @@ function HomePage({ navigation }) {
               <Switch
                 value={filters.handdryer}
                 onValueChange={(newValue) => setFilters({ ...filters, handdryer: newValue })}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Sanitary Bin</Text>
+              <Switch
+                value={filters.sanitaryBin}
+                onValueChange={(newValue) => setFilters({ ...filters, sanitaryBin: newValue })}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>No Reports</Text>
+              <Switch
+                value={filters.noReports}
+                onValueChange={(newValue) => setFilters({ ...filters, noReports: newValue })}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Handicap</Text>
+              <Switch
+                value={filters.handicap}
+                onValueChange={(newValue) => setFilters({ ...filters, handicap: newValue })}
               />
             </View>
             <View style={styles.filterRow}>
@@ -254,6 +315,20 @@ function HomePage({ navigation }) {
                 style={pickerSelectStyles}
                 useNativeAndroidPickerStyle={false}
                 value={filters.room_code}
+              />
+            </View>
+            <View style={styles.filterRow}>
+              <Text style={styles.filterLabel}>Gender</Text>
+              <RNPickerSelect
+                onValueChange={(itemValue) => setFilters({ ...filters, gender: itemValue })}
+                items={[
+                  { label: 'All', value: 'All' },
+                  { label: 'male', value: 'male' },
+                  { label: 'female', value: 'female' },
+                ]}
+                style={pickerSelectStyles}
+                useNativeAndroidPickerStyle={false}
+                value={filters.gender}
               />
             </View>
             <View style={styles.filterApplyButton}>
@@ -480,8 +555,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   filterModalView: {
+    marginTop: 100,
     marginHorizontal: 20,
-    marginTop: 150,
     backgroundColor: "white",
     borderRadius: 20,
     padding: 35,
