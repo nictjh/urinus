@@ -67,6 +67,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
         elevation: 5,
+        borderRadius: 10,
     },
     input: {
         borderWidth: 1,
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginTop: 10,
+        padding: 15,
     },
     signInButton: {
         backgroundColor: '#007BFF',
