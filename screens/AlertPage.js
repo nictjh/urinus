@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Button, View, StyleSheet, ScrollView, Text, TouchableOpacity } from 'react-native';
 import { useAuth } from '../screens/AuthContext';
 import { supabase } from  '../lib/supabase';
+import { getGlobalRefresh, setGlobalRefresh } from '../global/globVariables.js';
 
 
 function AlertPage() {
@@ -9,6 +10,7 @@ function AlertPage() {
     const [errors, setErrors] = useState([]);
     const [toiletMapping, setToiletMapping] = useState({});
     const [expanded, setExpanded] = useState(false);
+    const [refreshStatus, setRefreshStatus] = useState(false)
 
     const fetchErrors = async () => {
         try {
@@ -48,13 +50,33 @@ function AlertPage() {
         setExpanded(!expanded);
     };
 
+    const refreshFunction = () => {
+        const checkValue = getGlobalRefresh()
+        if (checkValue == true) {
+            setRefreshStatus(checkValue)
+        }
+    }
 
-    useEffect(() =>{
-        fetchErrors();
-        markerMapping();
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            refreshFunction();
+        }, 1000);
+
+        // Cleanup function to clear the interval
+        return () => clearInterval(intervalId);
     }, []);
 
-    return (
+    useEffect(() => {
+        if (refreshStatus) {
+            console.log("refreshStatus was true, hence remounting")
+        }
+        setRefreshStatus(false)
+        setGlobalRefresh(false)
+        fetchErrors();
+        markerMapping();
+    }, [refreshStatus]);
+
+    return ( // Handle duplicates
         <View style={styles.container}>
             <View style={styles.header}>
                 <Text style={styles.headerText}>Report Alerts</Text>
@@ -63,7 +85,8 @@ function AlertPage() {
                 {errors.slice(0, expanded ? errors.length: 3).map((error, index) => (
                     <View key={index} style={styles.card}>
                     <Text style={styles.descriptionText}>
-                        "{error.description}" was reported for toilets near
+                        "{error.description}" was reported for <Text style={styles.contactHeaders}>Cubicle {error.cubicle_no}</Text>
+                        , near
                         <Text style={styles.contactHeaders}> {toiletMapping[error.toilet_uuid]}</Text>
                     </Text>
                         <Text style={styles.dateText}>{new Date(error.created_at).toLocaleString()}</Text>
