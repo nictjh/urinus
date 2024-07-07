@@ -12,7 +12,7 @@ function ReviewPage({ route }) {
     const { markerToPass } = route.params // Check for null then assign
     const { session } = useAuth();
     const [markers, setMarkers] = useState([]);
-    const [selectedMarker, setSelectedMarker] = useState(markerToPass ? markerToPass : null);
+    const [selectedMarker, setSelectedMarker] = useState(null);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [description, setDescription] = useState('');
     const [rating, setRating] = useState(0);
@@ -33,10 +33,15 @@ function ReviewPage({ route }) {
         handdryer: require('../assets/hand-dryer.png'),
     };
 
+    useEffect(() => {
+        if (markerToPass) {
+            setSelectedMarker(markerToPass);
+        }
+    }, [markerToPass]);
 
     useEffect(() => {
-        fetchMarkers()
-        getCubicles()
+        fetchMarkers();
+        getCubicles();
     }, [selectedMarker]);
 
 
