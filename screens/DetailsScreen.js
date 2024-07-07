@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 import { Rating } from 'react-native-ratings';
 import { useNavigation } from '@react-navigation/native';
+import { setGlobalRefresh } from '../global/globVariables.js';
 
 
 function DetailsScreen({ route }) {
@@ -68,24 +69,57 @@ function DetailsScreen({ route }) {
     // Handle report button (two scenarios, 'clog' or 'tissue')
     console.log(uuid);
     setModalVisible(false);
-    // Insert report into errors table
     try {
-      const {data , error, status} = await supabase
+      // Update errors table with new instant report (need to handle the duplicates so it will show properly)
+      const { response, error, status } = await supabase
         .from('errors')
-        .insert({
-          toilet_uuid: uuid,
-          cubicle_no: cubNumber,
-          description: "Instant report: " + selectedIssue,
-        });
-      if (error) {
-        console.log("Failed to insert data into errors table", error);
+        .select('*')
+        .eq('toilet_uuid', uuid)
+        .eq('cubicle_no', cubNumber);
+      console.log(response);
+      if (response) {
+        console.log("Updating current response!")
+        try {
+          const {data , error, status} = await supabase
+            .from('errors')
+            .update({
+              description: "Instant report: " + selectedIssue,
+            })
+            .eq('toilet_uuid', uuid)
+            .eq('cubicle_no', cubNumber)
+          if (error) {
+            console.log("Failed to insert data into errors table", error);
+          }
+          console.log("Successfully inserted report!", data);
+        } catch (error) {
+          console.log("Error with database operation", error);
+        }
+      } else {
+        console.log("Creating new error row")
+        try {
+          const {data , error, status} = await supabase
+            .from('errors')
+            .insert({
+              toilet_uuid: uuid,
+              cubicle_no: cubNumber,
+              description: "Instant report: " + selectedIssue,
+            });
+          if (error) {
+            console.log("Failed to insert data into errors table", error);
+          }
+          console.log("Successfully inserted report!", data);
+        } catch (error) {
+          console.log("Error with database operation", error);
+        }
       }
-      console.log("Successfully inserted report!", data);
+      // Handle refresh in alert page
+      setGlobalRefresh(true);
+
     } catch (error) {
-      console.log("Error with database operation", error);
+      console.log("Error with database operation", error)
     }
 
-    // Set cubicle status
+    // Updates Cubicle Table with new status section:
     if (selectedIssue === "Tissue") {
       try {
         const { data, error, status } = await supabase
@@ -311,7 +345,7 @@ function DetailsScreen({ route }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionHeader}>Toilet Details</Text>
+        <Text style={styles.sectionHeader}>{marker.room_name}, Toilet Details</Text>
         <View style={styles.amenitiesContainer}>
           {amenities.map((item, index) => (
             <View key={index} style={styles.amenity}>
