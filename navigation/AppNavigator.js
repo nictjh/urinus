@@ -116,7 +116,7 @@ const TabNavigator = () => {
                 ),
             }} />
 
-            <Tab.Screen name="Review" component={ReviewPage} options={{
+            <Tab.Screen name="Review" component={ReviewPage} initialParams= {{ marker: null }} options={{
                 title: 'Submit',
                 tabBarIcon: ({ focused }) => (
                     <Image source={rateIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />

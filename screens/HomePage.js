@@ -10,9 +10,10 @@ import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
 import { color } from '@rneui/themed/dist/config';
+import { useNavigation } from '@react-navigation/native'
 
 
-function HomePage({ navigation }) {
+function HomePage() {
 
   const { session } = useAuth();
   const [markers, setMarkers] = useState([]);
@@ -30,7 +31,7 @@ function HomePage({ navigation }) {
     room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
     gender: 'All', // will hold 'All', 'male' or 'female'
   });
-
+  const navigation = useNavigation()
 
   const featureIcons = {
     bidet: require('../assets/bidet.png'),
