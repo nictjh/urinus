@@ -326,7 +326,7 @@ function DetailsScreen({ route }) {
         <View style={styles.reviewButContainer}>
           <TouchableOpacity
             style={styles.submitReviewButton}
-            onPress={() => navigation.navigate('Review')}
+            onPress={() => { console.log(marker); navigation.navigate('Review', { markerToPass : marker })}}
           >
             <Image
               source={require('../assets/circle-plus.png')}

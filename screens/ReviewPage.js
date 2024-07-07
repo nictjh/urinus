@@ -7,10 +7,11 @@ import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
 // const markerFile =  require('../markers.json');
 
-function ReviewPage() {
+function ReviewPage({ route }) {
+    const { markerToPass } = route.params // Check for null then assign
     const { session } = useAuth();
     const [markers, setMarkers] = useState([]);
-    const [selectedMarker, setSelectedMarker] = useState(null);
+    const [selectedMarker, setSelectedMarker] = useState(markerToPass ? markerToPass : null);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [description, setDescription] = useState('');
     const [rating, setRating] = useState(0);
@@ -34,7 +35,8 @@ function ReviewPage() {
 
     useEffect(() => {
         fetchMarkers()
-    }, []);
+        getCubicles()
+    }, [selectedMarker]);
 
 
     const renderItem = (item) => {
@@ -122,7 +124,7 @@ function ReviewPage() {
     };
 
     const getCubicles = async () => {
-        if (selectedMarker === null) {
+        if (!selectedMarker) {
             setCubicles([]);
             return;
         }
@@ -221,8 +223,9 @@ function ReviewPage() {
                         labelField="room_name"
                         placeholder="Select a toilet to rate! *"
                         searchPlaceholder="Search for your toilets :)"
+                        value={ selectedMarker ? selectedMarker.id : null }
                         onChange={item => {
-                            setSelectedMarker(item);
+                            setSelectedMarker(item); //State update happens but the component doesnt remount so it will not update current stuff
                             getCubicles();
                         }}
                         renderItem={renderItem}
