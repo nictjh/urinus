@@ -3,11 +3,12 @@ import { Image, View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'rea
 import { useAuth } from '../screens/AuthContext';
 import { supabase } from  '../lib/supabase';
 import { Rating } from 'react-native-ratings';
-
+import { getGlobalRefresh, setGlobalRefresh } from '../global/globVariables.js'
 
 function CardsPage() {
     const [reviews, setReviews] = useState([]);
     const [toiletMapping, setToiletMapping] = useState({});
+    const [refreshStatus, setRefreshStatus] = useState(false)
 
     const fetchReviews = async () => {
         const { data, error } = await supabase
@@ -37,6 +38,13 @@ function CardsPage() {
             console.log("Database error, failed to run markerMapping: ", error);
         }
     };
+
+    const refreshFunction = () => {
+        const checkValue = getGlobalRefresh()
+        if (checkValue == true) {
+            setRefreshStatus(checkValue)
+        }
+    }
 
     const handleDislike = (uuid) => {
         console.log("Unhandled yet!");
@@ -77,10 +85,26 @@ function CardsPage() {
         );
       };
 
-      useEffect(() => {
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            refreshFunction();
+        }, 1000);
+
+        // Cleanup function to clear the interval
+        return () => clearInterval(intervalId);
+    }, []);
+
+    useEffect(() => {
+        if (refreshStatus) {
+            // When refreshStatus is true this will remount
+            console.log("refreshStatus was true, hence remounting")
+        }
+        //reset my global variables
+        setRefreshStatus(false)
+        setGlobalRefresh(false)
         fetchReviews();
         markerMapping();
-    }, []);
+    }, [refreshStatus]);
 
     return (
         <View style={styles.container}>

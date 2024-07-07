@@ -5,6 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
+import { setGlobalRefresh } from '../global/globVariables';
 // const markerFile =  require('../markers.json');
 
 function ReviewPage({ route }) {
@@ -175,7 +176,8 @@ function ReviewPage({ route }) {
                         rated: rating,
                     },
                 ]);
-
+            // Handle refresh in cardPage
+            setGlobalRefresh(true);
             if (error) {
                 Alert.alert('Error inserting data:', error);
             } else {
@@ -185,6 +187,7 @@ function ReviewPage({ route }) {
             console.log('Supabase error:', error.message);
         }
         try {
+            // Think this will always run
             const { data, error } = await supabase
                 .from('toilets')
                 .update({
@@ -196,12 +199,15 @@ function ReviewPage({ route }) {
                 console.log('Error updating toilet rating data:', error);
             } else {
                 setSelectedMarker(null);
+                setDescription('');
+                setRating(0);
                 console.log('Rating updated successfully:', data);
                 // Update local state or perform further actions as needed
             }
         } catch (error) {
             console.log('Supabase error:', error.message);
         }
+
     }
 
     return (
