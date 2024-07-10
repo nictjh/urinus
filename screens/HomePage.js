@@ -161,6 +161,18 @@ function HomePage() {
     }
   };
 
+  const resetFilters = () => {
+    setFilters({
+      minRating: 0, // will hold 0, 1, 2, 3, 4, or 5
+      bidet: false,
+      handdryer: false,
+      sanitaryBin: false,
+      noReports: true,
+      handicap: false,
+      room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
+      gender: 'All', // will hold 'All', 'male' or 'female'
+    })
+  };
 
   const renderFeatureIcon = (featureAvailable, featureType) => {
     if (featureAvailable) {
@@ -332,13 +344,22 @@ function HomePage() {
                 value={filters.gender}
               />
             </View>
-            <View style={styles.filterApplyButton}>
-              <TouchableOpacity onPress={() => {
-                fetchMarkers();
-                setFilterModalVisible(false);
-              }}>
-                <Text style={styles.filterApplyText}>Apply Filters</Text>
-              </TouchableOpacity>
+            <View style={styles.filterRow}>
+              <View style={styles.filterApplyButton}>
+                <TouchableOpacity onPress={() => {
+                  resetFilters();
+                }}>
+                  <Text style={styles.filterApplyText}>Reset</Text>
+                </TouchableOpacity>
+              </View>
+              <View style={styles.filterApplyButton}>
+                <TouchableOpacity onPress={() => {
+                  fetchMarkers();
+                  setFilterModalVisible(false);
+                }}>
+                  <Text style={styles.filterApplyText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -611,12 +632,13 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
   },
   filterApplyButton: {
-    alignSelf: 'flex-start',
+    width: '45%',
     backgroundColor: '#007BFF',
     borderRadius: 5,
     padding: 5,
   },
   filterApplyText: {
+    alignSelf: 'center',
     color: 'white',
     fontSize: 18,
     padding: 5,
