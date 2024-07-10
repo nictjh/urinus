@@ -22,7 +22,6 @@ function HomePage() {
   const mapRef = useRef(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [filters, setFilters] = useState({
-    minRating: 0, // will hold 0, 1, 2, 3, 4, or 5
     bidet: false,
     handdryer: false,
     sanitaryBin: false,
@@ -31,6 +30,7 @@ function HomePage() {
     room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
     gender: 'All', // will hold 'All', 'male' or 'female'
   });
+  const [minRating, setMinRating] = useState(0); // will hold 0, 1, 2, 3, 4, or 5
   const navigation = useNavigation()
 
   const featureIcons = {
@@ -151,7 +151,7 @@ function HomePage() {
       // Filter based on rating calculated from total_cumulative_rating and total_people_rated
       const filteredData = data.filter(item => {
         const rating = item.total_people_rated > 0 ? item.total_cumulative_rating / item.total_people_rated : 0;
-        return rating >= filters.minRating;
+        return rating >= minRating;
       });
 
       setMarkers(filteredData);
@@ -163,7 +163,6 @@ function HomePage() {
 
   const resetFilters = () => {
     setFilters({
-      minRating: 0, // will hold 0, 1, 2, 3, 4, or 5
       bidet: false,
       handdryer: false,
       sanitaryBin: false,
@@ -172,6 +171,7 @@ function HomePage() {
       room_code: 'All', // will hold 'All', 'COM1', 'COM2', or 'COM3'
       gender: 'All', // will hold 'All', 'male' or 'female'
     })
+    setMinRating(0);
   };
 
   const renderFeatureIcon = (featureAvailable, featureType) => {
@@ -271,12 +271,12 @@ function HomePage() {
               <View style={{ flexDirection: 'column' }}>
                 <Rating
                   type="star"
-                  startingValue={filters.minRating}
+                  startingValue={minRating}
                   ratingCount={5}
                   imageSize={25}
                   tintColor={'#F0F0F0'}  // bg color
-                  onSwipeRating={(itemValue) => setFilters({ ...filters, minRating: itemValue })}
-                  onFinishRating={(itemValue) => setFilters({ ...filters, minRating: itemValue })}
+                  onSwipeRating={setMinRating}
+                  onFinishRating={setMinRating}
                 />
               </View>
             </View>
