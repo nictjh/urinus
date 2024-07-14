@@ -155,7 +155,7 @@ function DetailsScreen({ route }) {
       console.log("Not Handled!");
     }
     // I need to setState so i can refresh everything
-    console.log("expoPushToken retrieved: ",expoPushToken);
+    console.log("expoPushToken retrieved: ", expoPushToken);
     const notifMessage = `ALERT! Reports that Cubicle ${cubNumber} near ${marker.room_name} has a ${selectedIssue} issue.`;
     sendPushNotification(expoPushToken, notifMessage);
     setCubicleStatus(!cubicleStatus);
