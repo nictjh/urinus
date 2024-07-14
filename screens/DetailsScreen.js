@@ -5,6 +5,7 @@ import { Rating } from 'react-native-ratings';
 import { useNavigation } from '@react-navigation/native';
 import { setGlobalRefresh } from '../global/globVariables.js';
 import { usePushNotifications } from '../global/usePushNotification.js';
+import { TELE_BOT_API, TELE_CHANNEL } from '@env';
 
 
 function DetailsScreen({ route }) {
@@ -157,7 +158,9 @@ function DetailsScreen({ route }) {
     // I need to setState so i can refresh everything
     console.log("expoPushToken retrieved: ", expoPushToken);
     const notifMessage = `ALERT! Reports that Cubicle ${cubNumber} near ${marker.room_name} has a ${selectedIssue} issue.`;
+    console.log(notifMessage);
     sendPushNotification(expoPushToken, notifMessage);
+    sendTeleMessage(notifMessage);
     setCubicleStatus(!cubicleStatus);
   };
 
@@ -182,6 +185,26 @@ function DetailsScreen({ route }) {
     });
   };
 
+
+  const sendTeleMessage = async (message) => {
+    const encodedMessage = encodeURIComponent(message);
+    console.log(TELE_BOT_API, TELE_CHANNEL);
+    try {
+      const request = await fetch(`https://api.telegram.org/bot${TELE_BOT_API}/sendMessage?chat_id=${TELE_CHANNEL}&text=${encodedMessage}`, {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      const response = await request.json();
+      if (!request.ok) {
+        console.error('Failed to send message:', response);
+      } else {
+        console.log("Message sent successfully", response);
+      }
+      return response;
+    } catch (error) {
+      console.log("Error sending telegram message", error);
+    }
+  }
 
 
 
