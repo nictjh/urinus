@@ -25,10 +25,10 @@ export const usePushNotifications = () => {
         return;
       }
 
-      token = await Notifications.getExpoPushTokenAsync({
-        projectId: Constants.expoConfig?.extra?.eas.projectId,
-      });
-    // token = (await Notifications.getExpoPushTokenAsync({ projectId: "262a5b33-18f2-4e72-a9f7-2dbb8df934ea" })).data;
+      // token = await Notifications.getExpoPushTokenAsync({
+      //   projectId: Constants.expoConfig?.extra?.eas.projectId,
+      // });
+      token = (await Notifications.getExpoPushTokenAsync({ projectId: "25f70071-5fe6-4cf1-8091-2ad7d27008b5" })).data;
 
     } else {
       alert("Must use a physical device for push notifications");
