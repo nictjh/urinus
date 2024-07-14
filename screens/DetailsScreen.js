@@ -4,6 +4,7 @@ import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity, Modal, Al
 import { Rating } from 'react-native-ratings';
 import { useNavigation } from '@react-navigation/native';
 import { setGlobalRefresh } from '../global/globVariables.js';
+import { usePushNotifications } from '../global/usePushNotification.js';
 
 
 function DetailsScreen({ route }) {
@@ -20,7 +21,7 @@ function DetailsScreen({ route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [currentCubicle, setCurrentCubicle] = useState(null); // to pass correct values
   const [cubicleStatus, setCubicleStatus] = useState(false); // to refresh and remount components
-
+  const { expoPushToken } = usePushNotifications();
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -153,9 +154,37 @@ function DetailsScreen({ route }) {
     } else {
       console.log("Not Handled!");
     }
-    // I need to setState to i can refresh everything
+    // I need to setState so i can refresh everything
+    console.log("expoPushToken retrieved: ",expoPushToken);
+    const notifMessage = `ALERT! Reports that Cubicle ${cubNumber} near ${marker.room_name} has a ${selectedIssue} issue.`;
+    sendPushNotification(expoPushToken, notifMessage);
     setCubicleStatus(!cubicleStatus);
   };
+
+
+  const sendPushNotification = async (expoPushToken, messageBody) => {
+    const message = {
+      to: expoPushToken,
+      sound: 'default',
+      title: 'UriNUS',
+      body: messageBody,
+      data: { someData: 'goes here' },
+    };
+
+    await fetch('https://exp.host/--/api/v2/push/send', {
+      method: 'POST',
+      headers: {
+        Accept: 'application/json',
+        'Accept-encoding': 'gzip, deflate',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(message),
+    });
+  };
+
+
+
+
 
   // Creating star component
   const RatingDisplay = ({rating, count}) => {
