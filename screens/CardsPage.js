@@ -9,7 +9,7 @@ import { useNavigation } from '@react-navigation/native';
 function CardsPage() {
     const [reviews, setReviews] = useState([]);
     const [toiletMapping, setToiletMapping] = useState({});
-    const [refreshStatus, setRefreshStatus] = useState(false)
+    const [refreshStatus, setRefreshStatus] = useState(false);
 
     const navigation = useNavigation()
 
@@ -64,7 +64,7 @@ function CardsPage() {
                     <Image source={require('../assets/testpic.jpg')} style={styles.image} />
                     <View style={styles.content}>
                         <Text style={styles.name}>{toiletMapping[review.toilet_uuid]}</Text>
-                        <Text style={styles.comment}>User: {review.description}</Text>
+                        <Text style={styles.comment}>{review.reviewer ? review.reviewer : "User"}: {review.description}</Text>
                         <View style={styles.ratingLocation}>
                             <Rating
                                 type="star"
