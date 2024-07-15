@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
-import { setGlobalRefresh } from '../global/globVariables';
+import { setGlobalRefresh, setReviewRefresh } from '../global/globVariables';
 // const markerFile =  require('../markers.json');
 
 function ReviewPage({ route }) {
@@ -18,6 +18,7 @@ function ReviewPage({ route }) {
     const [rating, setRating] = useState(0);
     const [cubicles, setCubicles] = useState([{ label: 'NA', value: "NA" }]);
     const [selectedCubicle, setSelectedCubicle] = useState("NA");
+    const [username, setUsername] = useState(''); // To get username if exists
     const [filters, setFilters] = useState({
         bidet: false,
         handdryer: false,
@@ -42,6 +43,7 @@ function ReviewPage({ route }) {
     useEffect(() => {
         fetchMarkers();
         getCubicles();
+        getProfile();
     }, [selectedMarker]);
 
 
@@ -192,10 +194,12 @@ function ReviewPage({ route }) {
                         cubicle_no: selectedCubicle,
                         description: description,
                         rated: rating,
+                        reviewer: username
                     },
                 ]);
             // Handle refresh in cardPage
             setGlobalRefresh(true);
+            setReviewRefresh(true);
             if (error) {
                 Alert.alert('Error inserting data:', error);
             } else {
@@ -227,6 +231,26 @@ function ReviewPage({ route }) {
         }
 
     }
+
+    const getProfile = async () => {
+        try {
+          const { data, error, status } = await supabase
+            .from('profiles')
+            .select(`username`)
+            .eq('id', session?.user.id)
+            .single()
+          if (error) {
+            throw error
+          }
+          if (data) {
+            setUsername(data.username)
+          }
+        } catch (error) {
+          if (error instanceof Error) {
+            Alert.alert('Error', error.message)
+          }
+        }
+      }
 
     return (
         <View style={styles.container}>

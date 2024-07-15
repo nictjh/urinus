@@ -3,7 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 import { Rating } from 'react-native-ratings';
 import { useNavigation } from '@react-navigation/native';
-import { setGlobalRefresh } from '../global/globVariables.js';
+import { setReviewRefresh, getReviewRefresh } from '../global/globVariables.js';
 import { usePushNotifications } from '../global/usePushNotification.js';
 import { TELE_BOT_API, TELE_CHANNEL } from '@env';
 
@@ -23,6 +23,7 @@ function DetailsScreen({ route }) {
   const [currentCubicle, setCurrentCubicle] = useState(null); // to pass correct values
   const [cubicleStatus, setCubicleStatus] = useState(false); // to refresh and remount components
   const { expoPushToken } = usePushNotifications();
+  const [refreshStatus, setRefreshStatus] = useState(false); // to poll for new reviews
 
   const toggleExpanded = () => {
     setExpanded(!expanded);
@@ -48,7 +49,8 @@ function DetailsScreen({ route }) {
     if (error) {
       console.log("Error fetching reviews specific to uuid: ", error);
     } else {
-      setReviews(data);
+      const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      setReviews(sortedData);
       if (data.length > 0) {
         // Calculate average reviews
         const totalRating = data.reduce((wish, curr) => wish + curr.rated, 0);
@@ -260,9 +262,13 @@ function DetailsScreen({ route }) {
   };
 
   const ReviewCard = ({ review }) => { // Future enhancements to change reviewerName
+    let displayUser = "Annoymous Butterfly";
+    if (review.reviewer) {
+      displayUser = review.reviewer;
+    }
     return (
       <View style={styles.reviewCard}>
-        <Text style={styles.reviewerName}>Annonymous Butterfly</Text>
+        <Text style={styles.reviewerName}>{displayUser}</Text>
         <Rating
           type="star"
           readonly={true}
@@ -362,10 +368,37 @@ function DetailsScreen({ route }) {
     { key: 'handicapped', label: 'Handicapped Toilet', value: marker.handicapped ? 'Present' : 'Absent', emoji: '♿' }
   ];
 
+
+  const refreshFunction = () => {
+    const checkValue = getReviewRefresh()
+    if (checkValue == true) {
+        setRefreshStatus(checkValue)
+    }
+  }
+
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+        refreshFunction();
+    }, 1000);
+
+    // Cleanup function to clear the interval
+    return () => clearInterval(intervalId);
+  }, []); // this poll for the global variable
+
   useEffect(() => {
     fetchCubicles(uuid);
     fetchReviews();
-  }, [uuid, cubicleStatus])
+  }, [uuid, cubicleStatus]);
+
+  useEffect(() => {
+    if (refreshStatus) {
+      // When refreshStatus is true this will remount
+      console.log("refreshStatus was true, hence remounting")
+  }
+    setRefreshStatus(false)
+    setReviewRefresh(false)
+    fetchReviews();
+  }, [refreshStatus]);
 
 
   return (
