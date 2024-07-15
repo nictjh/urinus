@@ -71,6 +71,7 @@ function DetailsScreen({ route }) {
     // Handle report button (two scenarios, 'clog' or 'tissue')
     console.log(uuid);
     setModalVisible(false);
+    let descriptiveIssue = "";
     try {
       // Update errors table with new instant report (need to handle the duplicates so it will show properly)
       const { response, error, status } = await supabase
@@ -129,7 +130,7 @@ function DetailsScreen({ route }) {
           .update({ tissue: false })
           .eq('cubicle_no', cubNumber)
           .eq('toilet_uuid', uuid);
-
+        descriptiveIssue = "has ran out of TISSUES!\nAvoid this cubicle if you are planning to take a number 2.";
         if (error) {
           console.error("Error updating tissue status", error);
         }
@@ -144,7 +145,7 @@ function DetailsScreen({ route }) {
           .update({ status: false })
           .eq('cubicle_no', cubNumber)
           .eq('toilet_uuid', uuid);
-
+        descriptiveIssue = "is completely clogged!\nAvoid this cubicle completely.";
         if (error) {
           console.error("Error updating status", error);
         }
@@ -157,7 +158,7 @@ function DetailsScreen({ route }) {
     }
     // I need to setState so i can refresh everything
     console.log("expoPushToken retrieved: ", expoPushToken);
-    const notifMessage = `ALERT! Reports that Cubicle ${cubNumber} near ${marker.room_name} has a ${selectedIssue} issue.`;
+    const notifMessage = `<b>ALERT!🚨🚨🚨🚨🚨</b>\n\nReports that <b>Cubicle ${cubNumber}</b> near ${marker.room_name} ${descriptiveIssue}`;
     console.log(notifMessage);
     sendPushNotification(expoPushToken, notifMessage);
     sendTeleMessage(notifMessage);
@@ -188,9 +189,10 @@ function DetailsScreen({ route }) {
 
   const sendTeleMessage = async (message) => {
     const encodedMessage = encodeURIComponent(message);
+    const parseMode = encodeURIComponent('HTML'); // Tells telegram api the parsing mode to ensure my html blocks get parsed properly
     console.log(TELE_BOT_API, TELE_CHANNEL);
     try {
-      const request = await fetch(`https://api.telegram.org/bot${TELE_BOT_API}/sendMessage?chat_id=${TELE_CHANNEL}&text=${encodedMessage}`, {
+      const request = await fetch(`https://api.telegram.org/bot${TELE_BOT_API}/sendMessage?chat_id=${TELE_CHANNEL}&text=${encodedMessage}&parse_mode=${parseMode}`, {
         method: 'GET',
         redirect: 'follow'
       });
