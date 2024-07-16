@@ -4,7 +4,7 @@ import { Button, Input } from '@rneui/themed';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useNavigation } from '@react-navigation/native';
-
+import { setProfileRefresh } from '../global/globVariables';
 
 function UpdatePage() {
   const { session } = useAuth();
@@ -68,6 +68,7 @@ function UpdatePage() {
     if (error) {
         Alert.alert("Error", "Failed to sign out: " + error.message);
     } else {
+        // setProfileRefresh(true);
         Alert.alert("Signed Out", "You have been signed out successfully.", [
             {
                 text: "OK",

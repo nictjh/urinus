@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase';
 import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
-import { setGlobalRefresh, setReviewRefresh } from '../global/globVariables';
+import { setGlobalRefresh, setReviewRefresh, getProfileRefresh, setProfileRefresh } from '../global/globVariables';
 // const markerFile =  require('../markers.json');
 
 function ReviewPage({ route }) {
@@ -19,6 +19,7 @@ function ReviewPage({ route }) {
     const [cubicles, setCubicles] = useState([{ label: 'NA', value: "NA" }]);
     const [selectedCubicle, setSelectedCubicle] = useState("NA");
     const [username, setUsername] = useState(''); // To get username if exists
+    const [refreshStatus, setRefreshStatus] = useState(false);
     const [filters, setFilters] = useState({
         bidet: false,
         handdryer: false,
@@ -38,6 +39,7 @@ function ReviewPage({ route }) {
         if (markerToPass) {
             setSelectedMarker(markerToPass);
         }
+        getProfile();
     }, [markerToPass]);
 
     useEffect(() => {
@@ -186,6 +188,7 @@ function ReviewPage({ route }) {
             } else {
                 setSelectedCubicle(parseInt(selectedCubicle));
             }
+            console.log("Before inserting: ",username);
             const { data, error } = await supabase
                 .from('reviews')
                 .insert([
@@ -243,12 +246,11 @@ function ReviewPage({ route }) {
             throw error
           }
           if (data) {
-            setUsername(data.username)
+            console.log(data.username);
+            setUsername(data.username);
           }
         } catch (error) {
-          if (error instanceof Error) {
-            Alert.alert('Error', error.message)
-          }
+          setUsername('');
         }
       }
 

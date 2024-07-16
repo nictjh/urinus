@@ -10,6 +10,9 @@ import ReviewPage from '../screens/ReviewPage';
 import DetailsScreen from '../screens/DetailsScreen';
 import CardsPage from '../screens/CardsPage';
 import AlertPage from '../screens/AlertPage';
+import CleanerDashPage from '../screens/CleanerDashPage';
+import CleanerLogin from '../screens/CleanerLogin';
+import CleanerResPage from '../screens/CleanerResPage';
 const homeIcon = require('../assets/navigation.png');
 const rateIcon = require('../assets/brand-twitter.png');
 const profileIcon = require('../assets/user-circle.png');
@@ -35,6 +38,7 @@ function AppNavigator() {
         <Stack.Navigator>
             <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="Auth" component={AuthStack} options={{ headerShown: false }} />
+            <Stack.Screen name= "Cleaner" component={CleanerStack} options={{ headerShown: false }}/>
         </Stack.Navigator>
 
     );
@@ -70,7 +74,17 @@ const HomeStack = () => {
         <Stack.Screen name="Details" component={DetailsScreen} options={{ title: 'Toilet Information' }} />
       </Stack.Navigator>
     );
-  };
+};
+
+const CleanerStack = () => {
+    return (
+        <Stack.Navigator>
+            <Stack.Screen name="CleanerLog" component={CleanerLogin} options={{ headerShown: false }} />
+            <Stack.Screen name="Dashboard" component={CleanerDashPage} options={{ headerShown: false }} />
+            <Stack.Screen name="Resolve" component={CleanerResPage} options={{ headerShown: false }} />
+        </Stack.Navigator>
+    );
+}
 
 const TabNavigator = () => {
 
@@ -96,7 +110,7 @@ const TabNavigator = () => {
         <Tab.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
 
             <Tab.Screen name="ReviewCards" component={CardsPage} options={{
-                title: 'Updates',
+                title: 'Reviews',
                 tabBarIcon: ({ focused }) => (
                     <Image source={cardsIcon} style={{ height: 30, width: 30, tintColor: focused ? "#000000" : "#999999" }} />
                 ),
