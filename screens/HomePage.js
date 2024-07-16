@@ -366,7 +366,13 @@ function HomePage() {
       </Modal >
       <TouchableOpacity style={styles.button} onPress={centerMapOnUserLocation}>
         <Image
-          source={require('../assets/userlocationbutton.png')}
+          source={require('../assets/navigation-center.png')}
+          style={styles.buttonImage}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.buttonClean} onPress={() => navigation.navigate('Cleaner', { screen: 'CleanerLog' })}>
+        <Image
+          source={require('../assets/cleaning-service.png')}
           style={styles.buttonImage}
         />
       </TouchableOpacity>
@@ -431,13 +437,31 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 10,
     overflow: 'hidden',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#8FB1C1',
     borderRadius: 30,
+    borderWidth: 1,
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 1, height: 1 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
+  },
+  buttonClean: {
+    position: 'absolute',
+    bottom: 90,
+    right: 20,
+    padding: 10,
+    overflow: 'hidden',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 30,
+    borderWidth: 1,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 4
   },
   buttonImage: {
     width: 38,

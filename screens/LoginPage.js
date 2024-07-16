@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
+import { setProfileRefresh } from '../global/globVariables';
 
 function LoginPage() {
     const navigation = useNavigation();
@@ -18,6 +19,7 @@ function LoginPage() {
 
         if (error) Alert.alert(error.message);
         else {
+            // setProfileRefresh(true);
             navigation.navigate('Tabs', { screen: 'Home' })
             setLoading(false)
         };
