@@ -10,7 +10,7 @@ import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
 import { color } from '@rneui/themed/dist/config';
-import { useNavigation } from '@react-navigation/native'
+import { useNavigation } from '@react-navigation/native';
 
 
 function HomePage() {
@@ -31,7 +31,7 @@ function HomePage() {
     gender: 'All', // will hold 'All', 'male' or 'female'
   });
   const [minRating, setMinRating] = useState(0); // will hold 0, 1, 2, 3, 4, or 5
-  const navigation = useNavigation()
+  const navigation = useNavigation();
 
   const featureIcons = {
     bidet: require('../assets/bidet.png'),

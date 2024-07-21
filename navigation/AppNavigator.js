@@ -81,7 +81,7 @@ const CleanerStack = () => {
         <Stack.Navigator>
             <Stack.Screen name="CleanerLog" component={CleanerLogin} options={{ headerShown: false }} />
             <Stack.Screen name="Dashboard" component={CleanerDashPage} options={{ headerShown: false }} />
-            <Stack.Screen name="Resolve" component={CleanerResPage} options={{ headerShown: false }} />
+            <Stack.Screen name="Resolve" component={CleanerResPage}  />
         </Stack.Navigator>
     );
 }

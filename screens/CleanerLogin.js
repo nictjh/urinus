@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState , useEffect } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { useNavigation } from '@react-navigation/native';
@@ -6,15 +6,36 @@ import { useNavigation } from '@react-navigation/native';
 function CleanerLogin() {
     const navigation = useNavigation();
     const [id, setId] = useState('');
+    const [cleanerIDs, setCleanerIDs] = useState([]);
 
-    // Handles one Cleaner ID only, next steps is to populate a cleaner table then pull from there
     function handleSignIn() {
-        if (id != "12345") {
+        if (!cleanerIDs.some((toCheck) => toCheck == id)) {
             Alert.alert("ID is not recognised");
         } else {
             navigation.navigate('Cleaner', { screen: 'Dashboard', params: { idToPass: id } });
         }
     }
+
+    const fetchCleanersData = async () => {
+        try{
+            const { data, error } = await supabase
+                .from("cleaners")
+                .select('*')
+            if (error) {
+                console.log("Error fetching Cleaners data!", error);
+            } else {
+                const ids = data.map(item => item.id);
+                setCleanerIDs(ids);
+                console.log("######## fetched lifetime errors too: ", ids)
+            }
+        } catch (error) {
+            console.log("Error with database operation,", error);
+        }
+    }
+
+    useEffect(() => {
+        fetchCleanersData();
+    }, []);
 
     return (
         <View style={styles.container}>
