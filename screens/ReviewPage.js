@@ -271,28 +271,29 @@ function ReviewPage({ route }) {
         } catch (error) {
             console.log('Supabase error:', error.message);
         }
-        try {
-            // Think this will always run
-            const { data, error } = await supabase
-                .from('cubicles')
-                .update({
-                    status: usable
-                })
-                .eq('toilet_uuid', selectedMarker.uuid)
-                .eq('cubicle_no', selectedCubicle);
-            if (error) {
-                console.log('Error updating cubicle status data:', error);
-            } else {
-                setSelectedMarker(null);
-                setDescription('');
-                setRating(0);
-                console.log('Cubicle status updated successfully:', data);
-                // Update local state or perform further actions as needed
+        if (selectedCubicle !== null) {
+            try {
+                // Think this will always run
+                const { data, error } = await supabase
+                    .from('cubicles')
+                    .update({
+                        status: usable
+                    })
+                    .eq('toilet_uuid', selectedMarker.uuid)
+                    .eq('cubicle_no', selectedCubicle);
+                if (error) {
+                    console.log('Error updating cubicle status data:', error);
+                } else {
+                    setSelectedMarker(null);
+                    setDescription('');
+                    setRating(0);
+                    console.log('Cubicle status updated successfully:', data);
+                    // Update local state or perform further actions as needed
+                }
+            } catch (error) {
+                console.log('Supabase error:', error.message);
             }
-        } catch (error) {
-            console.log('Supabase error:', error.message);
         }
-
     }
 
     const getProfile = async () => {
@@ -504,9 +505,9 @@ function ReviewPage({ route }) {
                         </View>
                     </View>
                 )}
-                {(selectedButton === 'report') && (
+                {(selectedButton === 'report') && (selectedCubicle !== "NA" && selectedCubicle !== "NIL") && (
                     <View style={styles.filterRow}>
-                        <Text style={styles.filterLabel}>Toilet Still Usable?</Text>
+                        <Text style={styles.filterLabel}>Cubicle Still Usable?</Text>
                         <Switch
                             value={usable}
                             onValueChange={setUsable}
