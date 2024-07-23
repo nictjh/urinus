@@ -12,6 +12,10 @@ function ReviewPage({ route }) {
     const { markerToPass } = route.params // Check for null then assign
     const { session } = useAuth();
     const [markers, setMarkers] = useState([]);
+
+    const [selectedButton, setSelectedButton] = useState('review');
+    const [usable, setUsable] = useState(false);
+
     const [selectedMarker, setSelectedMarker] = useState(null);
     const [filterModalVisible, setFilterModalVisible] = useState(false);
     const [description, setDescription] = useState('');
@@ -177,9 +181,9 @@ function ReviewPage({ route }) {
         }
     };
 
-    const submitData = async () => {
+    const submitReview = async () => {
         if (selectedMarker === null || rating === 0) {
-            Alert.alert('Please fill in all fields properly before submitting.', 'Fields marked with * are required. Please re-select your toilet if you have just submitted a rating!');
+            Alert.alert('Please fill in all fields properly before submitting.', 'Fields marked with * are required. Please re-select your toilet if you have just submitted a rating/report!');
             return;
         }
         try {
@@ -188,7 +192,7 @@ function ReviewPage({ route }) {
             } else {
                 setSelectedCubicle(parseInt(selectedCubicle));
             }
-            console.log("Before inserting: ",username);
+            console.log("Before inserting: ", username);
             const { data, error } = await supabase
                 .from('reviews')
                 .insert([
@@ -235,24 +239,80 @@ function ReviewPage({ route }) {
 
     }
 
+    const submitReport = async () => {
+        if (selectedMarker === null) {
+            Alert.alert('Please fill in all fields properly before submitting.', 'Please re-select your toilet if you have just submitted a rating/report!');
+            return;
+        }
+        try {
+            if (selectedCubicle === "NA" || selectedCubicle === "NIL") {
+                setSelectedCubicle(null);
+            } else {
+                setSelectedCubicle(parseInt(selectedCubicle));
+            }
+            console.log("Before inserting: ", username);
+            const { data, error } = await supabase
+                .from('errors')
+                .insert([
+                    {
+                        toilet_uuid: selectedMarker.uuid,
+                        cubicle_no: selectedCubicle,
+                        description: description,
+                    },
+                ]);
+            // Handle refresh in cardPage
+            setGlobalRefresh(true);
+            setReviewRefresh(true);
+            if (error) {
+                Alert.alert('Error inserting data:', error);
+            } else {
+                Alert.alert('Report submitted!', 'Thank you for your report!');
+            }
+        } catch (error) {
+            console.log('Supabase error:', error.message);
+        }
+        try {
+            // Think this will always run
+            const { data, error } = await supabase
+                .from('cubicles')
+                .update({
+                    status: usable
+                })
+                .eq('toilet_uuid', selectedMarker.uuid)
+                .eq('cubicle_no', selectedCubicle);
+            if (error) {
+                console.log('Error updating cubicle status data:', error);
+            } else {
+                setSelectedMarker(null);
+                setDescription('');
+                setRating(0);
+                console.log('Cubicle status updated successfully:', data);
+                // Update local state or perform further actions as needed
+            }
+        } catch (error) {
+            console.log('Supabase error:', error.message);
+        }
+
+    }
+
     const getProfile = async () => {
         try {
-          const { data, error, status } = await supabase
-            .from('profiles')
-            .select(`username`)
-            .eq('id', session?.user.id)
-            .single()
-          if (error) {
-            throw error
-          }
-          if (data) {
-            console.log(data.username);
-            setUsername(data.username);
-          }
+            const { data, error, status } = await supabase
+                .from('profiles')
+                .select(`username`)
+                .eq('id', session?.user.id)
+                .single()
+            if (error) {
+                throw error
+            }
+            if (data) {
+                console.log(data.username);
+                setUsername(data.username);
+            }
         } catch (error) {
-          setUsername('');
+            setUsername('');
         }
-      }
+    }
 
     return (
         <View style={styles.container}>
@@ -397,6 +457,26 @@ function ReviewPage({ route }) {
                     </Modal >
                 </View>
                 <View style={styles.filterRow}>
+                    <TouchableOpacity
+                        style={[
+                            styles.button,
+                            selectedButton === 'review' && styles.selectedButton
+                        ]}
+                        onPress={() => setSelectedButton('review')}
+                    >
+                        <Text style={styles.buttonText}>Review</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            styles.button,
+                            selectedButton === 'report' && styles.selectedButton
+                        ]}
+                        onPress={() => setSelectedButton('report')}
+                    >
+                        <Text style={styles.buttonText}>Report</Text>
+                    </TouchableOpacity>
+                </View>
+                <View style={styles.filterRow}>
                     <Text style={styles.filterLabel}>Cubicle Number</Text>
                     <RNPickerSelect
                         onValueChange={setSelectedCubicle}
@@ -408,20 +488,31 @@ function ReviewPage({ route }) {
                         placeholder={{ label: 'Select Cubicle', value: "NIL" }}
                     />
                 </View>
-                <View style={styles.filterRow}>
-                    <Text style={styles.filterLabel}>Rating *</Text>
-                    <View style={{ flexDirection: 'column' }}>
-                        <Rating
-                            type="star"
-                            startingValue={rating}
-                            ratingCount={5}
-                            imageSize={25}
-                            tintColor={'#F0F0F0'}  // bg color
-                            onSwipeRating={setRating}
-                            onFinishRating={setRating}
+                {(selectedButton === 'review') && (
+                    <View style={styles.filterRow}>
+                        <Text style={styles.filterLabel}>Rating *</Text>
+                        <View style={{ flexDirection: 'column' }}>
+                            <Rating
+                                type="star"
+                                startingValue={rating}
+                                ratingCount={5}
+                                imageSize={25}
+                                tintColor={'#F0F0F0'}  // bg color
+                                onSwipeRating={setRating}
+                                onFinishRating={setRating}
+                            />
+                        </View>
+                    </View>
+                )}
+                {(selectedButton === 'report') && (
+                    <View style={styles.filterRow}>
+                        <Text style={styles.filterLabel}>Toilet Still Usable?</Text>
+                        <Switch
+                            value={usable}
+                            onValueChange={setUsable}
                         />
                     </View>
-                </View>
+                )}
                 <View style={styles.filterRow}>
                     <Text style={styles.filterLabel}>Description</Text>
                     <TextInput
@@ -431,7 +522,12 @@ function ReviewPage({ route }) {
                         onChangeText={setDescription}
                     />
                 </View>
-                <Button title="Submit Review" onPress={submitData} style={{ borderRadius: 15 }} />
+                {(selectedButton === 'review') && (
+                    <Button title="Submit Review" onPress={submitReview} style={{ borderRadius: 15 }} />
+                )}
+                {(selectedButton === 'report') && (
+                    <Button title="Submit Report" onPress={submitReport} style={{ borderRadius: 15 }} />
+                )}
             </View>
         </View>
     );
@@ -455,7 +551,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 1, height: 3 },
         flexDirection: 'column',
         justifyContent: 'space-between',
-        height: 430,
+        height: 500,
     },
     description: {
         height: 100,
@@ -615,6 +711,21 @@ const styles = StyleSheet.create({
         bottom: 0,
         backgroundColor: 'rgba(0,0,0,0.7)',
         zIndex: 1  // ensuring da overlay is below the modal but above other content
+    },
+    button: {
+        backgroundColor: '#DDDDDD',
+        padding: 10,
+        margin: 10,
+        borderRadius: 10,
+        flex: 1,
+        marginTop: 20,
+    },
+    selectedButton: {
+        backgroundColor: '#2196F3',
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        alignSelf: 'center',
     },
 });
 
