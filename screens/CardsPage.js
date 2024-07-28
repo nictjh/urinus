@@ -11,7 +11,7 @@ function CardsPage() {
     const [toiletMapping, setToiletMapping] = useState({});
     const [refreshStatus, setRefreshStatus] = useState(false);
 
-    const navigation = useNavigation()
+    const navigation = useNavigation();
 
     const fetchReviews = async () => {
         const { data, error } = await supabase
