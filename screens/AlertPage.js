@@ -156,26 +156,27 @@ const styles = StyleSheet.create({
         color: 'gray',
         textAlign: 'right',
         paddingTop: 10
-    },toggleContainer: {
+    },
+    toggleContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginBottom: 10,
-  },
-  toggleContainer: {
+    },
+    toggleContainer: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     marginBottom: 10,
-  },
-  contactContainer: {
+    },
+    contactContainer: {
     paddingTop: 40
-  },
-  contactHeaders: {
+    },
+    contactHeaders: {
     fontWeight: 'bold'
-  },
-  blueHighlight: {
+    },
+    blueHighlight: {
     color: 'blue',
     fontWeight: 'bold'
-  }
+    }
 })
 
 

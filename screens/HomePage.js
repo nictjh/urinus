@@ -32,10 +32,15 @@ function HomePage() {
   });
   const [minRating, setMinRating] = useState(0); // will hold 0, 1, 2, 3, 4, or 5
   const navigation = useNavigation();
+  // I need a profile state bah
+  const [profile, setProfile] = useState([]);
+  const [savedToilets, setSavedToilets] = useState([]);
 
   const featureIcons = {
     bidet: require('../assets/bidet.png'),
     handdryer: require('../assets/hand-dryer.png'),
+    fav: require('../assets/heart.png'),
+    unfav: require('../assets/yellowHeart.png')
   };
   // for debugging purposes
   const [errorMsg, setErrorMsg] = useState(null);
@@ -49,8 +54,19 @@ function HomePage() {
         return;
       }
     })();
-    fetchMarkers()
   }, []);
+
+  // Fetch Profile Data
+  useEffect(() => {
+    if (session) {
+      getProfile();
+    }
+  }, [session]);
+
+  // Fetch Markers
+  useEffect(() => {
+    fetchMarkers();
+  }, [filters, savedToilets]);  // Re-run when filters change
 
   const centerMapOnUserLocation = async () => {
 
@@ -95,22 +111,26 @@ function HomePage() {
     );
   };
 
-  // async function getProfile() {
-  //   try{
-  //     const { data, error, status } = await supabase
-  //       .from('profiles')
-  //       .select(`username`)
-  //       .eq('id', session?.user.id)
-  //       .single()
-  //     if (error && status !== 406) {
-  //       throw error;
-  //     }
-  //   } catch (error) {
-  //     if (error instanceof Error) {
-  //       Alert.alert('Error', error.message);
-  //     }
-  //   }
-  // }
+  const getProfile = async () => {
+    try {
+        const { data, error, status } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session?.user.id)
+            .single()
+        if (error) {
+            throw error
+        }
+        if (data) {
+            setProfile(data);
+            setSavedToilets(data.saved_toilets ? data.saved_toilets.split(',').map(loc => loc.trim()) : []);
+            console.log(savedToilets);
+        }
+    } catch (error) {
+        setProfile([]);
+        setSavedToilets([]);
+    }
+}
 
   const fetchMarkers = async () => {
     let query = supabase.from('toilets').select('*');
@@ -177,9 +197,15 @@ function HomePage() {
   const renderFeatureIcon = (featureAvailable, featureType) => {
     if (featureAvailable) {
       let iconSource = featureIcons[featureType];
-      return <Image source={iconSource} style={{ width: 24, height: 24 }} />;
+      return <Image source={iconSource} style={{ width: 35, height: 35 }} />;
     }
     return null;
+  };
+
+  const renderHeartIcon = (roomName) => {
+    const isSaved = savedToilets.includes(roomName);
+    const iconSource = isSaved ? featureIcons["unfav"] : featureIcons["fav"];
+    return <Image source={iconSource} style={{ height: 30, width: 30 }} />;
   };
 
   const handleMarkerPress = (marker) => {
@@ -203,6 +229,35 @@ function HomePage() {
     setTimeout(() => {
       navigation.navigate('Details', { marker: item });
     }, 300);
+  };
+
+  const handleFavPress = async () => {
+    const currRoomName = selectedMarker.room_name;
+    let updatedToilets = [];
+
+    if (savedToilets.includes(currRoomName)) { // if it alr exists
+      updatedToilets = savedToilets.filter(room => room !== currRoomName) //removes the room
+    } else {
+      // if it doesnt exist
+      updatedToilets = [...savedToilets, currRoomName];
+    }
+
+    setSavedToilets(updatedToilets);
+
+    try {
+      const { error } = await supabase
+            .from('profiles')
+            .update({ saved_toilets: updatedToilets.join(',') })  // Converts array back to String to store
+            .eq('id', session.user.id);
+
+        if (error) throw error;
+
+        Alert.alert("Success", `Favorites updated successfully.`)
+    } catch (error) {
+      console.error('Error updating favorites:', error);
+        Alert.alert("Error", "Failed to update favorites.");
+        setSavedToilets(savedToilets);
+    }
   };
 
   return (
@@ -406,12 +461,21 @@ function HomePage() {
                     style={styles.closeButtonImage}
                   />
                 </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.seeMoreButton}
-                  onPress={handleSeeMorePress}
-                >
-                  <Text style={styles.seeMoreButtonText}>See More</Text>
-                </TouchableOpacity>
+                <View style={{ flexDirection: 'row' }}>
+                  <TouchableOpacity
+                    style={styles.seeMoreButton}
+                    onPress={handleSeeMorePress}
+                  >
+                    <Text style={styles.seeMoreButtonText}>See More</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.favButton}
+                    onPress={handleFavPress}
+                    disabled = {!session}
+                  >
+                    {renderHeartIcon(selectedMarker.room_name)}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -519,9 +583,8 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    padding: 10,
+    top: 0,
+    right: 3,
   },
   closeButtonImage: {
     width: 24,
@@ -529,10 +592,16 @@ const styles = StyleSheet.create({
   },
   seeMoreButton: {
     padding: 10,
-    marginTop: 10,
+    marginTop: 15,
     backgroundColor: '#007BFF',
     borderRadius: 5,
     alignItems: 'center',
+    flex: 5
+  },
+  favButton: {
+    padding: 10,
+    marginTop: 10,
+    flex: 0.5
   },
   seeMoreButtonText: {
     color: 'white',
