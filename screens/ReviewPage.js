@@ -6,6 +6,7 @@ import { Dropdown } from 'react-native-searchable-dropdown-kj';
 import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
 import { setGlobalRefresh, setReviewRefresh, getProfileRefresh, setProfileRefresh } from '../global/globVariables';
+import { TELE_BOT_API, TELE_CHANNEL } from '@env';
 // const markerFile =  require('../markers.json');
 
 function ReviewPage({ route }) {
@@ -244,34 +245,46 @@ function ReviewPage({ route }) {
             Alert.alert('Please fill in all fields properly before submitting.', 'Please re-select your toilet if you have just submitted a rating/report!');
             return;
         }
-        try {
-            if (selectedCubicle === "NA" || selectedCubicle === "NIL") {
-                setSelectedCubicle(null);
-            } else {
-                setSelectedCubicle(parseInt(selectedCubicle));
+        console.log("1 Selected cubicle: ", selectedCubicle);
+        if (selectedCubicle === "NA" || selectedCubicle === "NIL") {
+            try {
+                const { data, error } = await supabase
+                    .from('errors')
+                    .insert([
+                        {
+                            toilet_uuid: selectedMarker.uuid,
+                            description: description,
+                        },
+                    ]);
+            } catch (error) {
+                console.log('Supabase error:', error.message);
             }
-            console.log("Before inserting: ", username);
-            const { data, error } = await supabase
-                .from('errors')
-                .insert([
-                    {
-                        toilet_uuid: selectedMarker.uuid,
-                        cubicle_no: selectedCubicle,
-                        description: description,
-                    },
-                ]);
-            // Handle refresh in cardPage
-            setGlobalRefresh(true);
-            setReviewRefresh(true);
-            if (error) {
-                Alert.alert('Error inserting data:', error);
-            } else {
-                Alert.alert('Report submitted!', 'Thank you for your report!');
+        } else {
+            setSelectedCubicle(parseInt(selectedCubicle));
+            try {
+                const { data, error } = await supabase
+                    .from('errors')
+                    .insert([
+                        {
+                            toilet_uuid: selectedMarker.uuid,
+                            cubicle_no: selectedCubicle,
+                            description: description,
+                        },
+                    ]);
+            } catch (error) {
+                console.log('Supabase error:', error.message);
             }
-        } catch (error) {
-            console.log('Supabase error:', error.message);
         }
-        if (selectedCubicle !== null) {
+        // Handle refresh in cardPage
+        setGlobalRefresh(true);
+        setReviewRefresh(true);
+        console.log("yo is all good? ", selectedCubicle)
+        
+        Alert.alert('Report submitted!', 'Thank you for your report!');
+
+        console.log("2 Selected cubicle: ", selectedCubicle);
+        if (selectedCubicle !== "NA" && selectedCubicle !== "NIL") {
+            console.log("nono Selected cubicle: ", selectedCubicle);
             try {
                 // Think this will always run
                 const { data, error } = await supabase
@@ -294,6 +307,15 @@ function ReviewPage({ route }) {
                 console.log('Supabase error:', error.message);
             }
         }
+        console.log("3 Selected cubicle: ", selectedCubicle);
+        let notifMessage = `<b>ALERT!🚨🚨🚨🚨🚨</b>\n\nReports that`
+        if (selectedCubicle === "NA" || selectedCubicle === "NIL") {
+            notifMessage += ` <b>Toilet near${selectedMarker.room_name}</b> has the following issue: ${description}`;
+        } else {
+            notifMessage += ` <b>Cubicle ${selectedCubicle} near ${selectedMarker.room_name}</b> has the following issue: ${description}`;
+        }
+        console.log("4 Selected cubicle: ", selectedCubicle);
+        sendTeleMessage(notifMessage);
     }
 
     const getProfile = async () => {
@@ -312,6 +334,27 @@ function ReviewPage({ route }) {
             }
         } catch (error) {
             setUsername('');
+        }
+    }
+
+    const sendTeleMessage = async (message) => {
+        const encodedMessage = encodeURIComponent(message);
+        const parseMode = encodeURIComponent('HTML'); // Tells telegram api the parsing mode to ensure my html blocks get parsed properly
+        console.log(TELE_BOT_API, TELE_CHANNEL);
+        try {
+            const request = await fetch(`https://api.telegram.org/bot${TELE_BOT_API}/sendMessage?chat_id=${TELE_CHANNEL}&text=${encodedMessage}&parse_mode=${parseMode}`, {
+                method: 'GET',
+                redirect: 'follow'
+            });
+            const response = await request.json();
+            if (!request.ok) {
+                console.error('Failed to send message:', response);
+            } else {
+                console.log("Message sent successfully", response);
+            }
+            return response;
+        } catch (error) {
+            console.log("Error sending telegram message", error);
         }
     }
 
