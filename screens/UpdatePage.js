@@ -118,15 +118,19 @@ function UpdatePage() {
       </View>
       <View style={styles.lineBreak} />
       <View>
-        {favToilets.map((marker, index) => (
-          <TouchableOpacity key={index} onPress={() => handleCardPress(marker)}>
-            <View style={styles.card}>
-              <Text style={styles.descriptionText}>
-                {marker.room_name}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        ))}
+        {favToilets && favToilets.length > 0 ? (
+          favToilets.map((marker, index) => (
+            <TouchableOpacity key={index} onPress={() => handleCardPress(marker)}>
+              <View style={styles.card}>
+                <Text style={styles.descriptionText}>
+                  {marker.room_name}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))
+        ) : (
+          <Text style={{justifyContent:'center', fontSize: 20, marginTop:10}}>No toilets saved.</Text>
+        )}
       </View>
       <View style={styles.textBox}>
           <Text style={styles.header}>Profile</Text>
