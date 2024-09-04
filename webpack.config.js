@@ -19,7 +19,7 @@ module.exports = async function (env, argv) {
 
 
 
-// Fix attempt for maps 
+// Fix attempt for maps
 // module.exports = async function (env, argv) {
 //   const config = await createExpoWebpackConfigAsync(env, argv);
 
