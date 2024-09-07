@@ -93,14 +93,7 @@ const TabNavigator = () => {
 
     const handlePress = (targetScreen) => {
         if (!session) {
-            Alert.alert(
-                "Access Restricted",
-                "You must be logged in to access this page.",
-                [
-                    { text: "Cancel", style: "cancel" },
-                    { text: "Login", onPress: () => navigation.navigate('Auth', { screen: 'Login' }) }
-                ]
-            );
+                navigation.navigate('Auth', { screen: 'Login' });
         } else {
             navigation.navigate(targetScreen);
         }
