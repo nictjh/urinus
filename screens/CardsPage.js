@@ -76,12 +76,28 @@ function CardsPage() {
         }
     }
 
-    const handleDislike = (uuid) => {
-        console.log("Unhandled yet!"); //todo
+    const handleDislike = async (uuid, curr_dislikes) => {
+        const { error } = await supabase
+            .from('reviews')
+            .update({dislikes: curr_dislikes + 1})
+            .eq('review_uuid', uuid);
+        if (error) {
+            console.log("Error fetching reviews: ", error);
+        } else {
+            fetchAndUpdateReviews();
+        }
     };
 
-    const handleLike = (uuid) => {
-        console.log("Unhandled yet!"); //todo
+    const handleLike = async (uuid, curr_likes) => {
+        const { error } = await supabase
+            .from('reviews')
+            .update({likes: curr_likes + 1})
+            .eq('review_uuid', uuid);
+        if (error) {
+            console.log("Error fetching reviews: ", error);
+        } else {
+            fetchAndUpdateReviews();
+        }
     };
 
     const ReviewCard = ({ review }) => {
@@ -104,10 +120,10 @@ function CardsPage() {
                             <Text style={styles.location}>{review.cubicle_no ? "Cubicle Number " + review.cubicle_no : "Location not specified"}</Text>
                         </View>
                         <View style={styles.likesDislikes}>
-                            <TouchableOpacity style={styles.likesButton} onPress={() => handleLike(review.review_uuid)}>
+                            <TouchableOpacity style={styles.likesButton} onPress={() => handleLike(review.review_uuid, review.likes)}>
                                 <Text style={styles.likes}>{review.likes} Likes</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.dislikesButton} onPress={() => handleDislike(review.review_uuid)}>
+                            <TouchableOpacity style={styles.dislikesButton} onPress={() => handleDislike(review.review_uuid, review.dislikes)}>
                                 <Text style={styles.dislikes}>{review.dislikes} Dislikes</Text>
                             </TouchableOpacity>
                         </View>
@@ -126,19 +142,19 @@ function CardsPage() {
         return () => clearInterval(intervalId);
     }, []);
 
-    useEffect(() => {
-        const fetchAndUpdateReviews = async () => {
-            if (refreshStatus) {
-                // When refreshStatus is true this will remount
-                console.log("refreshStatus was true, hence remounting");
-            }
-                setRefreshStatus(false);
-                setGlobalRefresh(false);
-                let sortedReviews = await fetchReviews();
-                setReviews(sortedReviews);
-                markerMapping();
-        };
+    const fetchAndUpdateReviews = async () => {
+        if (refreshStatus) {
+            // When refreshStatus is true this will remount
+            console.log("refreshStatus was true, hence remounting");
+        }
+            setRefreshStatus(false);
+            setGlobalRefresh(false);
+            let sortedReviews = await fetchReviews();
+            setReviews(sortedReviews);
+            markerMapping();
+    };
 
+    useEffect(() => {
         fetchAndUpdateReviews(); //do i need to call await here
     }, [refreshStatus, selectedSort]);
     
