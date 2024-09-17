@@ -6,7 +6,7 @@ import { useNavigation } from '@react-navigation/native';
 import { setReviewRefresh, getReviewRefresh } from '../global/globVariables.js';
 import { usePushNotifications } from '../global/usePushNotification.js';
 import { TELE_BOT_API, TELE_CHANNEL } from '@env';
-
+import { fetchCubicles } from '../utils/supabaseData.js';
 
 function DetailsScreen({ route }) {
 
@@ -28,18 +28,6 @@ function DetailsScreen({ route }) {
   const toggleExpanded = () => {
     setExpanded(!expanded);
   };
-
-  const fetchCubicles = async (id) => {
-    const { data, error } = await supabase
-      .from('cubicles')
-      .select('*')
-      .eq('toilet_uuid', uuid);
-    if (error) {
-      console.log("Error fetching cubicles: ", error);
-    } else {
-      setCubicles(data);
-    }
-  }
 
   const fetchReviews = async () => {
     const { data, error } = await supabase
@@ -386,7 +374,11 @@ function DetailsScreen({ route }) {
   }, []); // this poll for the global variable
 
   useEffect(() => {
-    fetchCubicles(uuid);
+    const initCubicles = async () => {
+      const cubicles = await fetchCubicles(uuid);
+      setCubicles(cubicles);
+    }
+    initCubicles();
     fetchReviews();
   }, [uuid, cubicleStatus]);
 

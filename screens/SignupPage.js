@@ -20,7 +20,7 @@ function SignupPage() {
         })
 
         if (error) Alert.alert('SignUp failed', error.message);
-        if (!session) {
+        if (!error && !session) {
             Alert.alert('SignUp successful', 'Please check your inbox for email verification!');
             setLoading(false)
             navigation.navigate('Tabs', { screen: 'Home' });
