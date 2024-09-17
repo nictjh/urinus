@@ -5,26 +5,53 @@ import { supabase } from '../lib/supabase';
 import { Rating } from 'react-native-ratings';
 import { getGlobalRefresh, setGlobalRefresh } from '../global/globVariables.js';
 import { useNavigation } from '@react-navigation/native';
+import DropDownPicker from 'react-native-dropdown-picker';
 
 function CardsPage() {
     const [reviews, setReviews] = useState([]);
     const [toiletMapping, setToiletMapping] = useState({});
     const [refreshStatus, setRefreshStatus] = useState(false);
+    const [selectedSort, setSelectedSort] = useState("popular");
+    const [open, setOpen] = useState(false); // To control the dropdown open/close state
+    const [items, setItems] = useState([
+        { label: 'Most Popular', value: 'popular' },
+        { label: 'Most Controversial', value: 'controversial' },
+        { label: 'Highest Rating', value: 'highestRated' },
+        { label: 'Lowest Rating', value: 'lowestRated' },
+        { label: 'Most Recent', value: 'mostRecent'}
+    ]);
 
     const navigation = useNavigation();
 
     const fetchReviews = async () => {
         const { data, error } = await supabase
             .from('reviews')
-            .select('*')
+            .select('*');
         if (error) {
             console.log("Error fetching reviews: ", error);
         } else {
-            const sortedData = data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-            setReviews(sortedData);
+            const sortedData = data.sort((a, b) => {
+                switch (selectedSort) {
+                    case 'popular': // Sort by most likes
+                        return b.likes - a.likes;
+                    case 'controversial': // Sort by most dislikes
+                        return b.dislikes - a.dislikes;
+                    case 'highestRated': // Sort by rating descending
+                        return b.rated - a.rated;
+                    case 'lowestRated': // Sort by rating ascending
+                        return a.rated - b.rated;
+                    case 'mostRecent':
+                        return new Date(b.created_at) - new Date(a.created_at);
+                    default:
+                        return 0;
+                }
+            });
+
+            return sortedData;
         }
     };
 
+    
     const markerMapping = async () => {
         try {
             const { data, error } = await supabase
@@ -33,7 +60,7 @@ function CardsPage() {
             if (error) {
                 console.log("Error retrieving data from toilets table: ", error);
             } else {
-                let mapping = {};
+                let mapping = {}; //mapping: key = toilet_uuid, val = toilet.room_name
                 data.forEach(item => mapping[item.uuid] = item.room_name);
                 setToiletMapping(mapping);
             }
@@ -49,12 +76,28 @@ function CardsPage() {
         }
     }
 
-    const handleDislike = (uuid) => {
-        console.log("Unhandled yet!");
+    const handleDislike = async (uuid, curr_dislikes) => {
+        const { error } = await supabase
+            .from('reviews')
+            .update({dislikes: curr_dislikes + 1})
+            .eq('review_uuid', uuid);
+        if (error) {
+            console.log("Error fetching reviews: ", error);
+        } else {
+            fetchAndUpdateReviews();
+        }
     };
 
-    const handleLike = (uuid) => {
-        console.log("Unhandled yet!");
+    const handleLike = async (uuid, curr_likes) => {
+        const { error } = await supabase
+            .from('reviews')
+            .update({likes: curr_likes + 1})
+            .eq('review_uuid', uuid);
+        if (error) {
+            console.log("Error fetching reviews: ", error);
+        } else {
+            fetchAndUpdateReviews();
+        }
     };
 
     const ReviewCard = ({ review }) => {
@@ -77,10 +120,10 @@ function CardsPage() {
                             <Text style={styles.location}>{review.cubicle_no ? "Cubicle Number " + review.cubicle_no : "Location not specified"}</Text>
                         </View>
                         <View style={styles.likesDislikes}>
-                            <TouchableOpacity style={styles.likesButton} onPress={() => handleLike(review.review_uuid)}>
+                            <TouchableOpacity style={styles.likesButton} onPress={() => handleLike(review.review_uuid, review.likes)}>
                                 <Text style={styles.likes}>{review.likes} Likes</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity style={styles.dislikesButton} onPress={() => handleDislike(review.review_uuid)}>
+                            <TouchableOpacity style={styles.dislikesButton} onPress={() => handleDislike(review.review_uuid, review.dislikes)}>
                                 <Text style={styles.dislikes}>{review.dislikes} Dislikes</Text>
                             </TouchableOpacity>
                         </View>
@@ -99,17 +142,22 @@ function CardsPage() {
         return () => clearInterval(intervalId);
     }, []);
 
-    useEffect(() => {
+    const fetchAndUpdateReviews = async () => {
         if (refreshStatus) {
             // When refreshStatus is true this will remount
-            console.log("refreshStatus was true, hence remounting")
+            console.log("refreshStatus was true, hence remounting");
         }
-        //reset my global variables
-        setRefreshStatus(false)
-        setGlobalRefresh(false)
-        fetchReviews();
-        markerMapping();
-    }, [refreshStatus]);
+            setRefreshStatus(false);
+            setGlobalRefresh(false);
+            let sortedReviews = await fetchReviews();
+            setReviews(sortedReviews);
+            markerMapping();
+    };
+
+    useEffect(() => {
+        fetchAndUpdateReviews(); //do i need to call await here
+    }, [refreshStatus, selectedSort]);
+    
 
     const handleCardPress = async (uuid) => {
         let item = {};
@@ -136,6 +184,18 @@ function CardsPage() {
             <View style={styles.header}>
                 <Text style={styles.pageTitle}>Reviews</Text>
             </View>
+            <View style={styles.dropdownContainer}>
+                <DropDownPicker
+                    open={open}
+                    value={selectedSort}
+                    items={items}
+                    setOpen={setOpen}
+                    setValue={setSelectedSort}
+                    setItems={setItems}
+                    style={styles.dropdown}
+                    dropDownStyle={styles.dropdownList}
+                />
+            </View>
             <ScrollView style={styles.scrollContainer}>
                 {reviews.slice(0, 5).map((review) => (
                     <ReviewCard key={review.id} review={review} />
@@ -149,6 +209,17 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#f0f0f0',
+    },
+    dropdownContainer: {
+        margin: 16,
+    },
+    dropdown: {
+        backgroundColor: '#fafafa',
+        borderColor: '#ccc',
+        borderWidth: 1,
+    },
+    dropdownList: {
+        backgroundColor: '#fafafa',
     },
     header: {
         backgroundColor: 'white',
@@ -166,7 +237,12 @@ const styles = StyleSheet.create({
         marginBottom: 10,
     },
     scrollContainer: {
-        padding: 20
+        padding: 20,
+        zIndex: -4 //to put review cards behind dropdown
+    },
+    dropdownContainer: {
+        padding: 20,
+        zIndex: 10 //to put dropdown in front of review cards
     },
     card: {
         backgroundColor: '#FFFFFF',
