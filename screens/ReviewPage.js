@@ -167,7 +167,7 @@ function ReviewPage({ route }) {
             let dataCopy = data;
 
             if (error) {
-                console.log('Error fetching cubicles:', error);
+                console.log('Error fetching cubicles (ReviewPage.js) :', error);
                 setCubicles([{ label: "NA", value: "NA" }]); // Handle error by setting cubicles to a default array
             } else {
                 for (let i = 0; i < dataCopy.length; i++) {
