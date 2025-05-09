@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase';
 
 const fetchCubicles = async (id) => {
     const { data, error } = await supabase
-      .from('cubicles')
+      .from('cubicle_trial')
       .select('*')
       .eq('toilet_uuid', id);
     if (error) {

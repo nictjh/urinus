@@ -20,6 +20,7 @@ const cardsIcon = require('../assets/article.png');
 const alertIcon = require('../assets/exclamation-circle.png');
 import { useAuth } from '../screens/AuthContext';
 import { useNavigation } from '@react-navigation/native';
+import TrialScreen from '../screens/TrialScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -63,8 +64,9 @@ const AuthStack = () => {
         <Stack.Navigator>
             <Stack.Screen name="Login" component={LoginPage} />
             <Stack.Screen name="Signup" component={SignupPage} />
+            <Stack.Screen name="Trial" component={TrialScreen} />
         </Stack.Navigator>
-    );
+    ); //Remove dev when done
 };
 
 const HomeStack = () => {

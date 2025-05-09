@@ -3,17 +3,18 @@ import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, Button, StyleSheet, ScrollView, TouchableOpacity, Modal, Alert, Image } from 'react-native';
 import { Rating } from 'react-native-ratings';
 import { useNavigation } from '@react-navigation/native';
-import { setReviewRefresh, getReviewRefresh } from '../global/globVariables.js';
+import { setReviewRefresh, getReviewRefresh, setGlobalRefresh } from '../global/globVariables.js';
 import { usePushNotifications } from '../global/usePushNotification.js';
 import { TELE_BOT_API, TELE_CHANNEL } from '@env';
 import { fetchCubicles } from '../utils/supabaseData.js';
 
-function DetailsScreen({ route }) {
+function DetailsScreen({ route }) { // Submit Review button not working too
 
-  const { marker } = route.params;
+  const { toilet } = route.params;
   const navigation = useNavigation();
-  const uuid = marker.uuid;
+  const uuid = toilet; // Coming in from FloorsCarousel the toilet_uuid
 
+  const [marker, setMarker] = useState({}); // Marker is now referenced to toilets info
   const [cubicles, setCubicles] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
@@ -29,9 +30,28 @@ function DetailsScreen({ route }) {
     setExpanded(!expanded);
   };
 
-  const fetchReviews = async () => {
+  const fetchMarker = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('toilet_trial')
+        .select('*')
+        .eq('toilet_uuid', uuid);
+      if (error) {
+        console.error("Error fetching toilet data in (DetailsScreen.js) : ", error);
+      } else if (data && data.length > 0) {
+        setMarker(data[0]); // Fetch the only row of data
+        console.log("Fetched toilet data: ", data[0]);
+      } else {
+        console.log("No data found for the given UUID in (DetailsScreen.js)");
+      }
+    } catch (err) {
+      console.log("Unexpected error in fetchMarker in (DetailsScreen.js) : ", err);
+    }
+  };
+
+  const fetchReviews = async () => { //Fixed
     const { data, error } = await supabase
-      .from('reviews')
+      .from('reviews_trial')
       .select('*')
       .eq('toilet_uuid', uuid);
     if (error) {
@@ -63,9 +83,29 @@ function DetailsScreen({ route }) {
     setModalVisible(false);
     let descriptiveIssue = "";
     try {
+      // Fetch the cubicle_uuid from cubicle_trial table
+      const { data: cubicleData, error: fetchError } = await supabase
+        .from('cubicle_trial')
+        .select('cub_uuid') // Only fetch cubicle_uuid for efficiency
+        .eq('cubicle_no', cubNumber)
+        .eq('toilet_uuid', uuid)
+        .single(); // Fetch a single row
+
+      if (fetchError) {
+        console.error("Error fetching cubicle_uuid from cubicle_trial", fetchError);
+        return;
+      }
+
+      if (!cubicleData || !cubicleData.cub_uuid) {
+        console.error("Cubicle UUID not found for the provided cubicle number and toilet UUID");
+        return;
+      }
+
+      const cubicleUuid = cubicleData.cub_uuid;
+
       // Update errors table with new instant report (need to handle the duplicates so it will show properly)
       const { response, error, status } = await supabase
-        .from('errors')
+        .from('errors_trial') // changed this from errors
         .select('*')
         .eq('toilet_uuid', uuid)
         .eq('cubicle_no', cubNumber);
@@ -74,7 +114,7 @@ function DetailsScreen({ route }) {
         console.log("Updating current response!")
         try {
           const {data , error, status} = await supabase
-            .from('errors')
+            .from('errors_trial')
             .update({
               description: "Instant report: " + selectedIssue,
             })
@@ -88,14 +128,15 @@ function DetailsScreen({ route }) {
           console.log("Error with database operation", error);
         }
       } else {
-        console.log("Creating new error row")
+        console.log("Creating new error row with cub_uuid of : ", cubicleUuid);
         try {
           const {data , error, status} = await supabase
-            .from('errors')
+            .from('errors_trial')
             .insert({
               toilet_uuid: uuid,
               cubicle_no: cubNumber,
               description: "Instant report: " + selectedIssue,
+              cubicle_uuid: cubicleUuid, //Fetched the cubicle_id to update table with it too
             });
           if (error) {
             console.log("Failed to insert data into errors table", error);
@@ -114,9 +155,9 @@ function DetailsScreen({ route }) {
 
     // Updates Cubicle Table with new status section:
     if (selectedIssue === "Tissue") {
-      try {
+      try { // TO DO : update this with new settings
         const { data, error, status } = await supabase
-          .from('cubicles')
+          .from('cubicle_trial') //previous is cubicle db
           .update({ tissue: false })
           .eq('cubicle_no', cubNumber)
           .eq('toilet_uuid', uuid);
@@ -131,7 +172,7 @@ function DetailsScreen({ route }) {
     } else if (selectedIssue === "Clog") {
       try {
         const { data, error, status } = await supabase
-          .from('cubicles')
+          .from('cubicle_trial')
           .update({ status: false })
           .eq('cubicle_no', cubNumber)
           .eq('toilet_uuid', uuid);
@@ -291,11 +332,11 @@ function DetailsScreen({ route }) {
           </View>
           <View style={styles.amenityCubText}>
             <Image source={require('../assets/wifi.png')} style={styles.cubicleIcon} />
-            <Text> Wi-Fi: {cubicle.wifi_connectivity ? `${cubicle.wifi_connectivity} Bars` : 'No Wi-Fi'}</Text>
+            <Text> Wi-Fi: {cubicle.wifi ? `${cubicle.wifi} Bars` : 'No Wi-Fi'}</Text>
           </View>
           <View style={styles.amenityCubText}>
             <Image source={require('../assets/disabled.png')} style={styles.cubicleIcon} />
-            <Text> Handicapped: {cubicle.handicap ? 'Accessible' : 'Not Accessible'}</Text>
+            <Text> Handicapped: {cubicle.hdcp ? 'Accessible' : 'Not Accessible'}</Text>
           </View>
           <View style={styles.amenityCubText}>
             <Image source={require('../assets/toilet-paper.png')} style={styles.cubicleIcon} />
@@ -374,6 +415,7 @@ function DetailsScreen({ route }) {
   }, []); // this poll for the global variable
 
   useEffect(() => {
+    fetchMarker();
     const initCubicles = async () => {
       const cubicles = await fetchCubicles(uuid);
       setCubicles(cubicles);
@@ -405,7 +447,7 @@ function DetailsScreen({ route }) {
         <View style={styles.reviewButContainer}>
           <TouchableOpacity
             style={styles.submitReviewButton}
-            onPress={() => { console.log(marker); navigation.navigate('Review', { markerToPass : marker })}}
+            onPress={() => { console.log("Redirecting to ReviewPage.js!!!!" + marker); navigation.navigate('Review', { markerToPass : marker })}} // This is not working well?
           >
             <Image
               source={require('../assets/circle-plus.png')}
@@ -424,7 +466,7 @@ function DetailsScreen({ route }) {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.sectionHeader}>{marker.room_name}, Toilet Details</Text>
+        <Text style={styles.sectionHeader}>{marker.loc_name} level {marker.floorLevel}, Toilet Details</Text>
         <View style={styles.amenitiesContainer}>
           {amenities.map((item, index) => (
             <View key={index} style={styles.amenity}>
