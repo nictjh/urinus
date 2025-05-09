@@ -11,7 +11,6 @@ import RNPickerSelect from 'react-native-picker-select';
 import { Rating } from 'react-native-ratings';
 import { color } from '@rneui/themed/dist/config';
 import { useNavigation } from '@react-navigation/native';
-import FloorsCarousel from '../components/FloorsCarousel';
 
 
 function HomePage() {
@@ -133,7 +132,6 @@ function HomePage() {
     }
 }
 
-  // This is the fetch function that allows us to  get filtered/unfiltered markers from the database.
   const fetchMarkers = async () => {
     let query = supabase.from('toilets').select('*');
 
