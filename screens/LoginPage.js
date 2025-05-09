@@ -49,9 +49,8 @@ function LoginPage() {
         </View>
         <Button title="Home" onPress={() => navigation.navigate('Tabs', { screen: 'Home' })} />
         </View>
-        {/* <Button title="Dev" onPress={() => navigation.navigate("Trial")}/> */}
     </View>
-    ); // Remove Dev after done
+    );
 };
 
 const styles = StyleSheet.create({

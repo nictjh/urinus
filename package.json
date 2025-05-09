@@ -23,7 +23,6 @@
     "@supabase/supabase-js": "^2.43.4",
     "@teovilla/react-native-web-maps": "^0.9.5",
     "expo": "~51.0.31",
-    "expo-blur": "^13.0.2",
     "expo-constants": "~16.0.2",
     "expo-device": "~6.0.2",
     "expo-location": "~17.0.1",
@@ -52,8 +51,7 @@
     "react-searchable-dropdown": "^2.0.3"
   },
   "devDependencies": {
-    "@babel/core": "^7.20.0",
-    "@faker-js/faker": "^9.0.1"
+    "@babel/core": "^7.20.0"
   },
   "private": true
 }
